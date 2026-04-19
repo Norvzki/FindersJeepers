@@ -1,8 +1,9 @@
 public class RouteStop // belongs to route, right?
 {
-    // PK is RouteID, LocationID
-    public int RouteId { get; private set; } // FK and CK
-    public int LocationId { get; private set; } // FK and CK
+    // PK is Id
+    public int Id { get; set; } // PK
+    public int RouteId { get; private set; }  
+    public int LocationId { get; private set; } 
     public int StopIndex { get; private set; } // what position this is in the route's stops
 
     private RouteStop()

@@ -1,5 +1,6 @@
 using FindersJeepers.Client.Pages;
 using FindersJeepers.Components;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,10 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+var connectionString = builder.Configuration.GetConnectionString("JeepDB");
+
+builder.Services.AddDbContext<MyDbContext>(options => options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 

@@ -35,10 +35,20 @@ public class Trip : AggregateRoot
         if (Status == TripStatus.Completed) throw new DomainException("You cannot start an already completed trip!");
         if (Status == TripStatus.Unavailable) throw new NotImplementedException("Not implemented yet.");
 
+        DepartureTime = DateTime.UtcNow;
         Status = TripStatus.OnGoing;
     }
 
-    public void LogArrival(int stopId, int passengerCount, TripLogType logType)
+    public void CompleteTrip()
+    {
+        if (Status != TripStatus.OnGoing)
+            throw new DomainException("Trip must be ongoing to complete.");
+
+        Status = TripStatus.Completed;
+        ArrivalTime = DateTime.UtcNow;
+    }
+
+    public void LogStopEvent(int stopId, int passengerCount, TripLogType logType)
     {
         // i arrive at ayala with N people. When you arrive, CLASSIFY ONLY THOSE WHO GET OFF THE JEEP.
         // i depart from ayala with N people. When departing, CLASSIFY ONLY THOSE WHO HAVE GET ON THE JEEP.
@@ -46,7 +56,10 @@ public class Trip : AggregateRoot
         if (Status != TripStatus.OnGoing) throw new DomainException("Trip has not started yet!");
 
         var log = TripLog.Create(this.Id, stopId, passengerCount, logType);
-
+        _logs.Add(log);
+        // Event: if this log is Route.LocationStopId then complete this trip.
+        // Event: if passengerCount is equal to Jeepney.Capacity, Jeepney.Status will be Status.Full
+        // Event: if passengerCount is higher than Jeepner.Capacity, Jeepney.Status will be Status.Overloaded
     }
 
 
