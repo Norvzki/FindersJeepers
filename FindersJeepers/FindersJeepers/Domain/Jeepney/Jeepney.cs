@@ -31,13 +31,10 @@ public class Jeepney : AggregateRoot
         };
     }
 
-    public void Hire()
+    public void ChangeDriver(int driverId)
     {
-        // raise event JeepneyHireEvent // allows the creation of Trips.
+        if(driverId < 1) throw new DomainException("Invalid Driver ID!");
+        DriverId = driverId;
     }
-    public void Unhire()
-    {
-        // raise event JeepneyUnhireEvent // turns the latest trip into "unavailable" if possible. Stops the creation of trips.
-        // This event will only activate if there are no ongoing trips for this jeep.
-    }
+
 }

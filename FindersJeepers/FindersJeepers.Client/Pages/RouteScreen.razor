@@ -1,0 +1,296 @@
+﻿@page "/routes"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" Class="mb-1 fw-bold">Routes & Stops</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Define jeepney routes and their stop sequences.</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Justify="Justify.SpaceBetween">
+    <MudTextField @bind-Value="_search"
+                  Placeholder="Search by route code..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="max-width:320px;" />
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenAddDialog">
+        Add Route
+    </MudButton>
+</MudStack>
+
+@if (_routes is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!FilteredRoutes.Any())
+{
+    <MudAlert Severity="Severity.Info">No routes found.</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var route in FilteredRoutes)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Style="border-radius:12px;">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Tertiary" Size="Size.Large" Variant="Variant.Filled">
+                                <MudIcon Icon="@Icons.Material.Filled.AltRoute" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@route.RouteCode</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @route.LocationStart → @route.LocationEnd
+                            </MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                                <MudMenuItem OnClick="() => OpenStopsPanel(route)">Manage Stops</MudMenuItem>
+                                <MudMenuItem OnClick="() => OpenEditDialog(route)">Edit</MudMenuItem>
+                                <MudMenuItem OnClick="() => ConfirmDelete(route)">
+                                    <MudText Color="Color.Error">Delete</MudText>
+                                </MudMenuItem>
+                            </MudMenu>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudDivider />
+                    <MudCardContent Class="pt-3">
+                        @if (route.Stops.Any())
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary mb-2">STOPS (@route.Stops.Count)</MudText>
+                            <MudList T="RouteStopDto" Dense="true" DisablePadding="true">
+                                @foreach (var stop in route.Stops.OrderBy(s => s.StopIndex))
+                                {
+                                    <MudListItem T="RouteStopDto">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                                                @stop.StopIndex
+                                            </MudChip>
+                                            <MudText Typo="Typo.body2">@stop.LocationName</MudText>
+                                        </MudStack>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary fst-italic">No stops defined yet.</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@* Add/Edit Route Dialog *@
+<MudDialog @bind-IsVisible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditing ? "Edit Route" : "Add Route")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.RouteCode" Label="Route Code" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_form.LocationStartId" Label="Start Location" Variant="Variant.Outlined" Required="true">
+                    @foreach (var loc in _availableLocations)
+                    {
+                        <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_form.LocationEndId" Label="End Location" Variant="Variant.Outlined" Required="true">
+                    @foreach (var loc in _availableLocations)
+                    {
+                        <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveRoute">
+            @(_isEditing ? "Save Changes" : "Add Route")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Manage Stops Dialog *@
+<MudDialog @bind-IsVisible="_stopsDialogVisible" Options="_stopsDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Manage Stops — @_selectedRoute?.RouteCode</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.caption" Class="mud-text-secondary mb-3">
+            Stops are ordered by index. Changes replace all existing stops.
+        </MudText>
+
+        @foreach (var stop in _editableStops)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
+                <MudNumericField @bind-Value="stop.StopIndex" Label="Index" Variant="Variant.Outlined"
+                                 Margin="Margin.Dense" Style="width:80px;" Min="0" />
+                <MudSelect @bind-Value="stop.LocationId" Label="Location" Variant="Variant.Outlined"
+                           Margin="Margin.Dense" Style="flex:1;">
+                    @foreach (var loc in _availableLocations)
+                    {
+                        <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                               OnClick="() => _editableStops.Remove(stop)" />
+            </MudStack>
+        }
+
+        <MudButton StartIcon="@Icons.Material.Filled.Add" OnClick="AddStop" Class="mt-2">
+            Add Stop
+        </MudButton>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _stopsDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveStops">Save Stops</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string _search = string.Empty;
+    private bool _dialogVisible = false;
+    private bool _stopsDialogVisible = false;
+    private bool _isEditing = false;
+    private RouteForm _form = new();
+    private RouteDto? _selectedRoute;
+    private List<EditableStop> _editableStops = new();
+    private List<RouteDto>? _routes;
+    private List<LocationOption> _availableLocations = new();
+
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+    private DialogOptions _stopsDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+    private IEnumerable<RouteDto> FilteredRoutes => _routes?
+        .Where(r => string.IsNullOrWhiteSpace(_search) ||
+                    r.RouteCode.Contains(_search, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<RouteDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+
+        _availableLocations = new List<LocationOption>
+        {
+            new() { Id = 1, Name = "Ayala Center Cebu" },
+            new() { Id = 2, Name = "Carbon Market" },
+            new() { Id = 3, Name = "SM City Cebu" },
+            new() { Id = 4, Name = "Colon Street" },
+            new() { Id = 5, Name = "IT Park" },
+        };
+
+        _routes = new List<RouteDto>
+        {
+            new()
+            {
+                Id = 1, RouteCode = "01A", LocationStart = "Ayala Center Cebu", LocationEnd = "Carbon Market",
+                Stops = new List<RouteStopDto>
+                {
+                    new() { StopIndex = 0, LocationName = "Ayala Center Cebu" },
+                    new() { StopIndex = 1, LocationName = "IT Park" },
+                    new() { StopIndex = 2, LocationName = "Colon Street" },
+                    new() { StopIndex = 3, LocationName = "Carbon Market" },
+                }
+            },
+            new()
+            {
+                Id = 2, RouteCode = "02B", LocationStart = "SM City Cebu", LocationEnd = "Colon Street",
+                Stops = new List<RouteStopDto>
+                {
+                    new() { StopIndex = 0, LocationName = "SM City Cebu" },
+                    new() { StopIndex = 1, LocationName = "Colon Street" },
+                }
+            },
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        _form = new RouteForm();
+        _isEditing = false;
+        _dialogVisible = true;
+    }
+
+    private void OpenEditDialog(RouteDto route)
+    {
+        _form = new RouteForm { Id = route.Id, RouteCode = route.RouteCode };
+        _isEditing = true;
+        _dialogVisible = true;
+    }
+
+    private void OpenStopsPanel(RouteDto route)
+    {
+        _selectedRoute = route;
+        _editableStops = route.Stops
+            .Select(s => new EditableStop { StopIndex = s.StopIndex, LocationId = s.LocationId })
+            .ToList();
+        _stopsDialogVisible = true;
+    }
+
+    private void AddStop() =>
+        _editableStops.Add(new EditableStop { StopIndex = _editableStops.Count });
+
+    private void CloseDialog() => _dialogVisible = false;
+
+    private async Task SaveRoute()
+    {
+        // Replace with: await RouteService.SaveAsync(_form);
+        CloseDialog();
+    }
+
+    private async Task SaveStops()
+    {
+        // Replace with: await RouteService.UpdateStopsAsync(_selectedRoute.Id, _editableStops);
+        _stopsDialogVisible = false;
+    }
+
+    private async Task ConfirmDelete(RouteDto route)
+    {
+        // Replace with confirm dialog + await RouteService.DeleteAsync(route.Id);
+    }
+
+    public class RouteDto
+    {
+        public int Id { get; set; }
+        public string RouteCode { get; set; } = string.Empty;
+        public string LocationStart { get; set; } = string.Empty;
+        public string LocationEnd { get; set; } = string.Empty;
+        public List<RouteStopDto> Stops { get; set; } = new();
+    }
+
+    public class RouteStopDto
+    {
+        public int LocationId { get; set; }
+        public string LocationName { get; set; } = string.Empty;
+        public int StopIndex { get; set; }
+    }
+
+    public class RouteForm
+    {
+        public int Id { get; set; }
+        public string RouteCode { get; set; } = string.Empty;
+        public int LocationStartId { get; set; }
+        public int LocationEndId { get; set; }
+    }
+
+    public class EditableStop
+    {
+        public int LocationId { get; set; }
+        public int StopIndex { get; set; }
+    }
+
+    public class LocationOption { public int Id { get; set; } public string Name { get; set; } = string.Empty; }
+}

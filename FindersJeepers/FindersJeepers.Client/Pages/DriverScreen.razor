@@ -1,0 +1,200 @@
+﻿@page "/drivers"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" Class="mb-1 fw-bold">Drivers</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Manage all registered jeepney drivers.</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Justify="Justify.SpaceBetween">
+    <MudTextField @bind-Value="_search"
+                  Placeholder="Search by name or license..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="max-width:320px;" />
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.PersonAdd"
+               OnClick="OpenAddDialog">
+        Add Driver
+    </MudButton>
+</MudStack>
+
+@if (_drivers is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!FilteredDrivers.Any())
+{
+    <MudAlert Severity="Severity.Info">No drivers found.</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var driver in FilteredDrivers)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="2" Style="border-radius:12px;">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Primary" Size="Size.Large">
+                                @driver.FirstName[0]@driver.LastName[0]
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                                @driver.FirstName @driver.LastName
+                            </MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @driver.LicenseNumber
+                            </MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                                <MudMenuItem OnClick="() => OpenEditDialog(driver)">Edit</MudMenuItem>
+                                <MudMenuItem OnClick="() => ConfirmDelete(driver)">
+                                    <MudText Color="Color.Error">Delete</MudText>
+                                </MudMenuItem>
+                            </MudMenu>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudDivider />
+                    <MudCardContent Class="pt-3">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">@driver.ContactNumber</MudText>
+                            </MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">Hired @driver.DateHired.ToString("MMM dd, yyyy")</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@* Add/Edit Dialog *@
+<MudDialog @bind-IsVisible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditing ? "Edit Driver" : "Add Driver")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.FirstName" Label="First Name" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.LastName" Label="Last Name" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.LicenseNumber" Label="License Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_form.ContactNumber" Label="Contact Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudDatePicker @bind-Date="_form.DateHired" Label="Date Hired" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDriver">
+            @(_isEditing ? "Save Changes" : "Add Driver")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string _search = string.Empty;
+    private bool _dialogVisible = false;
+    private bool _isEditing = false;
+    private DriverForm _form = new();
+    private List<DriverDto>? _drivers;
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    private IEnumerable<DriverDto> FilteredDrivers => _drivers?
+        .Where(d =>
+            string.IsNullOrWhiteSpace(_search) ||
+            $"{d.FirstName} {d.LastName}".Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            d.LicenseNumber.Contains(_search, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<DriverDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Replace with: _drivers = await DriverService.GetAllAsync();
+        await Task.Delay(500);
+        _drivers = new List<DriverDto>
+        {
+            new() { Id = 1, FirstName = "Juan", LastName = "Dela Cruz", LicenseNumber = "A01-23-456789", ContactNumber = "09171234567", DateHired = new DateTime(2021, 3, 15) },
+            new() { Id = 2, FirstName = "Maria", LastName = "Santos", LicenseNumber = "B02-45-678901", ContactNumber = "09281234567", DateHired = new DateTime(2020, 7, 1) },
+            new() { Id = 3, FirstName = "Pedro", LastName = "Reyes", LicenseNumber = "C03-67-890123", ContactNumber = "09391234567", DateHired = new DateTime(2022, 1, 20) },
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        _form = new DriverForm();
+        _isEditing = false;
+        _dialogVisible = true;
+    }
+
+    private void OpenEditDialog(DriverDto driver)
+    {
+        _form = new DriverForm
+        {
+            Id = driver.Id,
+            FirstName = driver.FirstName,
+            LastName = driver.LastName,
+            LicenseNumber = driver.LicenseNumber,
+            ContactNumber = driver.ContactNumber,
+            DateHired = driver.DateHired
+        };
+        _isEditing = true;
+        _dialogVisible = true;
+    }
+
+    private void CloseDialog() => _dialogVisible = false;
+
+    private async Task SaveDriver()
+    {
+        // Replace with: await DriverService.SaveAsync(_form);
+        CloseDialog();
+    }
+
+    private async Task ConfirmDelete(DriverDto driver)
+    {
+        // Replace with: show MudDialog confirm, then await DriverService.DeleteAsync(driver.Id);
+    }
+
+    // DTOs / Form models
+    public class DriverDto
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string LicenseNumber { get; set; } = string.Empty;
+        public string ContactNumber { get; set; } = string.Empty;
+        public DateTime DateHired { get; set; }
+    }
+
+    public class DriverForm
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string LicenseNumber { get; set; } = string.Empty;
+        public string ContactNumber { get; set; } = string.Empty;
+        public DateTime? DateHired { get; set; }
+    }
+}

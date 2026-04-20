@@ -1,0 +1,347 @@
+﻿@page "/trips"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" Class="mb-1 fw-bold">Trips & Logs</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Monitor active and completed jeepney trips.</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Justify="Justify.SpaceBetween">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudTextField @bind-Value="_search"
+                      Placeholder="Search by plate or route..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Style="max-width:260px;" />
+        <MudSelect @bind-Value="_statusFilter" Label="Status" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width:150px;">
+            <MudSelectItem Value="@((string?)null)">All</MudSelectItem>
+            <MudSelectItem Value="@("Waiting")">Waiting</MudSelectItem>
+            <MudSelectItem Value="@("OnGoing")">Ongoing</MudSelectItem>
+            <MudSelectItem Value="@("Completed")">Completed</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenAddDialog">
+        Create Trip
+    </MudButton>
+</MudStack>
+
+@if (_trips is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!FilteredTrips.Any())
+{
+    <MudAlert Severity="Severity.Info">No trips found.</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var trip in FilteredTrips)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Style="border-radius:12px;">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="@GetStatusColor(trip.Status)" Size="Size.Large" Variant="Variant.Filled">
+                                <MudIcon Icon="@GetStatusIcon(trip.Status)" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold">@trip.PlateNumber</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(trip.Status)" Variant="Variant.Filled">
+                                    @trip.Status
+                                </MudChip>
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Route: @trip.RouteCode</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                                @if (trip.Status == "Waiting")
+                                {
+                                    <MudMenuItem OnClick="() => StartTrip(trip)">Start Trip</MudMenuItem>
+                                }
+                                @if (trip.Status == "OnGoing")
+                                {
+                                    <MudMenuItem OnClick="() => OpenLogDialog(trip)">Log Stop Event</MudMenuItem>
+                                    <MudMenuItem OnClick="() => CompleteTrip(trip)">Complete Trip</MudMenuItem>
+                                }
+                                <MudMenuItem OnClick="() => OpenLogsPanel(trip)">View Logs</MudMenuItem>
+                            </MudMenu>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudDivider />
+                    <MudCardContent Class="pt-3">
+                        <MudStack Spacing="1">
+                            @if (trip.DepartureTime.HasValue)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.FlightTakeoff" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2">Departed: @trip.DepartureTime.Value.ToString("hh:mm tt")</MudText>
+                                </MudStack>
+                            }
+                            @if (trip.ArrivalTime.HasValue)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.FlightLand" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2">Arrived: @trip.ArrivalTime.Value.ToString("hh:mm tt")</MudText>
+                                </MudStack>
+                            }
+                            @if (!trip.DepartureTime.HasValue && !trip.ArrivalTime.HasValue)
+                            {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary fst-italic">Trip has not started yet.</MudText>
+                            }
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">@trip.LogCount log(s)</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@* Create Trip Dialog *@
+<MudDialog @bind-IsVisible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Create Trip</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_form.JeepneyId" Label="Jeepney" Variant="Variant.Outlined" Required="true">
+                    @foreach (var j in _availableJeepneys)
+                    {
+                        <MudSelectItem Value="@j.Id">@j.PlateNumber (@j.RouteCode)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _dialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTrip">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Log Stop Event Dialog *@
+<MudDialog @bind-IsVisible="_logDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Log Stop Event — @_selectedTrip?.PlateNumber</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_logForm.StopId" Label="Stop" Variant="Variant.Outlined" Required="true">
+                    @foreach (var stop in _availableStops)
+                    {
+                        <MudSelectItem Value="@stop.Id">@stop.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudNumericField @bind-Value="_logForm.PassengerCount" Label="Passenger Count" Variant="Variant.Outlined" Min="0" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_logForm.EventType" Label="Event Type" Variant="Variant.Outlined" Required="true">
+                    <MudSelectItem Value="@("Arrival")">Arrival</MudSelectItem>
+                    <MudSelectItem Value="@("Departure")">Departure</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _logDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveLog">Log Event</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* View Logs Dialog *@
+<MudDialog @bind-IsVisible="_logsPanelVisible" Options="_logsDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Trip Logs — @_selectedTrip?.PlateNumber</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (!_selectedTripLogs.Any())
+        {
+            <MudAlert Severity="Severity.Info">No logs for this trip yet.</MudAlert>
+        }
+        else
+        {
+            <MudTimeline TimelinePosition="TimelinePosition.Start">
+                @foreach (var log in _selectedTripLogs.OrderBy(l => l.Timestamp))
+                {
+                    <MudTimelineItem Color="@(log.EventType == "Arrival" ? Color.Info : Color.Success)" Size="Size.Small">
+                        <ItemContent>
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body2" Class="fw-bold">@log.StopName</MudText>
+                                <MudText Typo="Typo.caption">
+                                    @log.EventType · @log.PassengerCount passengers · @log.Timestamp.ToString("hh:mm tt")
+                                </MudText>
+                            </MudStack>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _logsPanelVisible = false">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string _search = string.Empty;
+    private string? _statusFilter = null;
+    private bool _dialogVisible = false;
+    private bool _logDialogVisible = false;
+    private bool _logsPanelVisible = false;
+    private TripForm _form = new();
+    private LogForm _logForm = new();
+    private TripDto? _selectedTrip;
+    private List<TripDto>? _trips;
+    private List<TripLogDto> _selectedTripLogs = new();
+    private List<JeepneyOption> _availableJeepneys = new();
+    private List<StopOption> _availableStops = new();
+
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+    private DialogOptions _logsDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+    private IEnumerable<TripDto> FilteredTrips => _trips?
+        .Where(t =>
+            (string.IsNullOrWhiteSpace(_search) ||
+             t.PlateNumber.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+             t.RouteCode.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
+            (_statusFilter is null || t.Status == _statusFilter))
+        ?? Enumerable.Empty<TripDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+
+        _availableJeepneys = new List<JeepneyOption>
+        {
+            new() { Id = 1, PlateNumber = "ABX 1234", RouteCode = "01A" },
+            new() { Id = 2, PlateNumber = "CDY 5678", RouteCode = "02B" },
+        };
+
+        _availableStops = new List<StopOption>
+        {
+            new() { Id = 1, Name = "Ayala Center Cebu" },
+            new() { Id = 2, Name = "IT Park" },
+            new() { Id = 3, Name = "Colon Street" },
+            new() { Id = 4, Name = "Carbon Market" },
+        };
+
+        _trips = new List<TripDto>
+        {
+            new() { Id = 1, PlateNumber = "ABX 1234", RouteCode = "01A", Status = "OnGoing", DepartureTime = DateTime.Now.AddHours(-1), LogCount = 3 },
+            new() { Id = 2, PlateNumber = "CDY 5678", RouteCode = "02B", Status = "Waiting", LogCount = 0 },
+            new() { Id = 3, PlateNumber = "ABX 1234", RouteCode = "01A", Status = "Completed", DepartureTime = DateTime.Now.AddHours(-4), ArrivalTime = DateTime.Now.AddHours(-2), LogCount = 6 },
+        };
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "OnGoing" => Color.Success,
+        "Waiting" => Color.Warning,
+        "Completed" => Color.Default,
+        _ => Color.Default
+    };
+
+    private string GetStatusIcon(string status) => status switch
+    {
+        "OnGoing" => Icons.Material.Filled.DirectionsBus,
+        "Waiting" => Icons.Material.Filled.HourglassTop,
+        "Completed" => Icons.Material.Filled.CheckCircle,
+        _ => Icons.Material.Filled.Circle
+    };
+
+    private void OpenAddDialog()
+    {
+        _form = new TripForm();
+        _dialogVisible = true;
+    }
+
+    private void OpenLogDialog(TripDto trip)
+    {
+        _selectedTrip = trip;
+        _logForm = new LogForm();
+        _logDialogVisible = true;
+    }
+
+    private void OpenLogsPanel(TripDto trip)
+    {
+        _selectedTrip = trip;
+        // Replace with: _selectedTripLogs = await TripService.GetLogsAsync(trip.Id);
+        _selectedTripLogs = new List<TripLogDto>
+        {
+            new() { StopName = "Ayala Center Cebu", EventType = "Departure", PassengerCount = 12, Timestamp = DateTime.Now.AddHours(-1) },
+            new() { StopName = "IT Park", EventType = "Arrival", PassengerCount = 8, Timestamp = DateTime.Now.AddMinutes(-40) },
+            new() { StopName = "IT Park", EventType = "Departure", PassengerCount = 14, Timestamp = DateTime.Now.AddMinutes(-35) },
+        };
+        _logsPanelVisible = true;
+    }
+
+    private async Task StartTrip(TripDto trip)
+    {
+        // Replace with: await TripService.StartTripAsync(trip.Id);
+        trip.Status = "OnGoing";
+        trip.DepartureTime = DateTime.Now;
+    }
+
+    private async Task CompleteTrip(TripDto trip)
+    {
+        // Replace with: await TripService.CompleteTripAsync(trip.Id);
+        trip.Status = "Completed";
+        trip.ArrivalTime = DateTime.Now;
+    }
+
+    private async Task SaveTrip()
+    {
+        // Replace with: await TripService.CreateAsync(_form);
+        _dialogVisible = false;
+    }
+
+    private async Task SaveLog()
+    {
+        // Replace with: await TripService.LogStopEventAsync(_selectedTrip.Id, _logForm);
+        _logDialogVisible = false;
+    }
+
+    public class TripDto
+    {
+        public int Id { get; set; }
+        public string PlateNumber { get; set; } = string.Empty;
+        public string RouteCode { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime? DepartureTime { get; set; }
+        public DateTime? ArrivalTime { get; set; }
+        public int LogCount { get; set; }
+    }
+
+    public class TripLogDto
+    {
+        public string StopName { get; set; } = string.Empty;
+        public string EventType { get; set; } = string.Empty;
+        public int PassengerCount { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+
+    public class TripForm { public int JeepneyId { get; set; } }
+
+    public class LogForm
+    {
+        public int StopId { get; set; }
+        public int PassengerCount { get; set; }
+        public string EventType { get; set; } = string.Empty;
+    }
+
+    public class JeepneyOption { public int Id { get; set; } public string PlateNumber { get; set; } = string.Empty; public string RouteCode { get; set; } = string.Empty; }
+    public class StopOption { public int Id { get; set; } public string Name { get; set; } = string.Empty; }
+}

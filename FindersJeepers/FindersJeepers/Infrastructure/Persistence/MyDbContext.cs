@@ -8,6 +8,11 @@ public class MyDbContext : DbContext
         base.OnConfiguring(optionsBuilder);
     }
 
+    public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
+    {
+         
+    }
+
     public DbSet<Jeepney> Jeepneys {  get; set; }
     public DbSet<Driver> Drivers { get; set; }
     public DbSet<Location> Locations { get; set; }

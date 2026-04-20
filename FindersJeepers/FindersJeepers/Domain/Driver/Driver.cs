@@ -16,6 +16,8 @@ public class Driver : AggregateRoot
         if (string.IsNullOrWhiteSpace(lName)) throw new DomainException("Last Name cannot be empty!");
         if (string.IsNullOrWhiteSpace(licenseNumber)) throw new DomainException("A driver must have a license number!");
         if (!IsValidContactNumber(contactNumber)) throw new DomainException("Invalid contact number!");
+        if (dateHired > DateTime.UtcNow) throw new DomainException("Date hired cannot be in the future");
+
         if (dateHired == DateTime.MinValue) throw new DomainException("Please check the date hired."); 
 
         return new Driver
@@ -33,4 +35,5 @@ public class Driver : AggregateRoot
         // use regex to validate number here
         return true;
     } 
+
 }

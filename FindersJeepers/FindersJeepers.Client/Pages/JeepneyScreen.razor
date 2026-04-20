@@ -1,0 +1,260 @@
+﻿@page "/jeepneys"
+@using MudBlazor
+
+<MudText Typo="Typo.h4" Class="mb-1 fw-bold">Jeepneys</MudText>
+<MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Manage your fleet of jeepneys.</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Justify="Justify.SpaceBetween">
+    <MudTextField @bind-Value="_search"
+                  Placeholder="Search by plate or body number..."
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Variant="Variant.Outlined"
+                  Margin="Margin.Dense"
+                  Style="max-width:320px;" />
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="OpenAddDialog">
+        Add Jeepney
+    </MudButton>
+</MudStack>
+
+@if (_jeepneys is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!FilteredJeepneys.Any())
+{
+    <MudAlert Severity="Severity.Info">No jeepneys found.</MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var jeepney in FilteredJeepneys)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="2" Style="border-radius:12px;">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Secondary" Size="Size.Large" Variant="Variant.Filled">
+                                <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@jeepney.PlateNumber</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Body #@jeepney.BodyNumber</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
+                                <MudMenuItem OnClick="() => OpenEditDialog(jeepney)">Edit</MudMenuItem>
+                                <MudMenuItem OnClick="() => OpenChangeDriverDialog(jeepney)">Change Driver</MudMenuItem>
+                                <MudMenuItem OnClick="() => ConfirmDelete(jeepney)">
+                                    <MudText Color="Color.Error">Delete</MudText>
+                                </MudMenuItem>
+                            </MudMenu>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudDivider />
+                    <MudCardContent Class="pt-3">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">@jeepney.DriverName</MudText>
+                            </MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">Route: @jeepney.RouteCode</MudText>
+                            </MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.AirlineSeatReclineNormal" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.body2">Capacity: @jeepney.Capacity</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@* Add/Edit Dialog *@
+<MudDialog @bind-IsVisible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(_isEditing ? "Edit Jeepney" : "Add Jeepney")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.PlateNumber" Label="Plate Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.BodyNumber" Label="Body Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudNumericField @bind-Value="_form.Capacity" Label="Capacity" Variant="Variant.Outlined" Min="1" Required="true" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_form.DriverId" Label="Assign Driver" Variant="Variant.Outlined" Required="true">
+                    @foreach (var driver in _availableDrivers)
+                    {
+                        <MudSelectItem Value="@driver.Id">@driver.FullName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12">
+                <MudSelect @bind-Value="_form.RouteId" Label="Assign Route" Variant="Variant.Outlined" Required="true">
+                    @foreach (var route in _availableRoutes)
+                    {
+                        <MudSelectItem Value="@route.Id">@route.RouteCode</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveJeepney">
+            @(_isEditing ? "Save Changes" : "Add Jeepney")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Change Driver Dialog *@
+<MudDialog @bind-IsVisible="_changeDriverDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Change Driver — @_selectedJeepney?.PlateNumber</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect @bind-Value="_newDriverId" Label="New Driver" Variant="Variant.Outlined">
+            @foreach (var driver in _availableDrivers)
+            {
+                <MudSelectItem Value="@driver.Id">@driver.FullName</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _changeDriverDialogVisible = false">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDriverChange">Confirm</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string _search = string.Empty;
+    private bool _dialogVisible = false;
+    private bool _changeDriverDialogVisible = false;
+    private bool _isEditing = false;
+    private JeepneyForm _form = new();
+    private JeepneyDto? _selectedJeepney;
+    private int _newDriverId;
+    private List<JeepneyDto>? _jeepneys;
+    private List<DriverOption> _availableDrivers = new();
+    private List<RouteOption> _availableRoutes = new();
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    private IEnumerable<JeepneyDto> FilteredJeepneys => _jeepneys?
+        .Where(j =>
+            string.IsNullOrWhiteSpace(_search) ||
+            j.PlateNumber.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+            j.BodyNumber.Contains(_search, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<JeepneyDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Replace with actual service calls
+        await Task.Delay(500);
+
+        _availableDrivers = new List<DriverOption>
+        {
+            new() { Id = 1, FullName = "Juan Dela Cruz" },
+            new() { Id = 2, FullName = "Maria Santos" },
+        };
+
+        _availableRoutes = new List<RouteOption>
+        {
+            new() { Id = 1, RouteCode = "01A - Ayala-Carbon" },
+            new() { Id = 2, RouteCode = "02B - SM-Colon" },
+        };
+
+        _jeepneys = new List<JeepneyDto>
+        {
+            new() { Id = 1, PlateNumber = "ABX 1234", BodyNumber = "001", Capacity = 16, DriverName = "Juan Dela Cruz", RouteCode = "01A - Ayala-Carbon" },
+            new() { Id = 2, PlateNumber = "CDY 5678", BodyNumber = "002", Capacity = 18, DriverName = "Maria Santos", RouteCode = "02B - SM-Colon" },
+        };
+    }
+
+    private void OpenAddDialog()
+    {
+        _form = new JeepneyForm();
+        _isEditing = false;
+        _dialogVisible = true;
+    }
+
+    private void OpenEditDialog(JeepneyDto jeepney)
+    {
+        _form = new JeepneyForm
+        {
+            Id = jeepney.Id,
+            PlateNumber = jeepney.PlateNumber,
+            BodyNumber = jeepney.BodyNumber,
+            Capacity = jeepney.Capacity,
+        };
+        _isEditing = true;
+        _dialogVisible = true;
+    }
+
+    private void OpenChangeDriverDialog(JeepneyDto jeepney)
+    {
+        _selectedJeepney = jeepney;
+        _newDriverId = 0;
+        _changeDriverDialogVisible = true;
+    }
+
+    private void CloseDialog() => _dialogVisible = false;
+
+    private async Task SaveJeepney()
+    {
+        // Replace with: await JeepneyService.SaveAsync(_form);
+        CloseDialog();
+    }
+
+    private async Task SaveDriverChange()
+    {
+        // Replace with: await JeepneyService.ChangeDriverAsync(_selectedJeepney.Id, _newDriverId);
+        _changeDriverDialogVisible = false;
+    }
+
+    private async Task ConfirmDelete(JeepneyDto jeepney)
+    {
+        // Replace with confirm dialog + await JeepneyService.DeleteAsync(jeepney.Id);
+    }
+
+    public class JeepneyDto
+    {
+        public int Id { get; set; }
+        public string PlateNumber { get; set; } = string.Empty;
+        public string BodyNumber { get; set; } = string.Empty;
+        public int Capacity { get; set; }
+        public string DriverName { get; set; } = string.Empty;
+        public string RouteCode { get; set; } = string.Empty;
+    }
+
+    public class JeepneyForm
+    {
+        public int Id { get; set; }
+        public string PlateNumber { get; set; } = string.Empty;
+        public string BodyNumber { get; set; } = string.Empty;
+        public int Capacity { get; set; }
+        public int DriverId { get; set; }
+        public int RouteId { get; set; }
+    }
+
+    public class DriverOption { public int Id { get; set; } public string FullName { get; set; } = string.Empty; }
+    public class RouteOption { public int Id { get; set; } public string RouteCode { get; set; } = string.Empty; }
+}

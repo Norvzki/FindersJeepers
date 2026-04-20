@@ -8,7 +8,7 @@ public class Trip : AggregateRoot
     public DateTime? ArrivalTime { get; private set; }
     public TripStatus Status { get; private set; }
 
-
+    private List<TripLog> _logs = new List<TripLog>();
     public IReadOnlyCollection<TripLog> Logs => _logs;
 
     private Trip()
@@ -63,7 +63,5 @@ public class Trip : AggregateRoot
     }
 
 
-
-    private List<TripLog> _logs = new List<TripLog>();
 
 }
