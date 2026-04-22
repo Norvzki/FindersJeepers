@@ -1,6 +1,7 @@
 public class Trip : AggregateRoot
 {
     public int Id { get; private set; } // Pk
+    public int DriverId { get; private set; } // Composite Key
     public int JeepneyId { get; private set; } // Composite Key
     public int RouteId { get; private set; } // We dont really need this, right?
 
@@ -14,13 +15,14 @@ public class Trip : AggregateRoot
     private Trip()
     {
     }
-    public static Trip Create(int jeepneyId, int routeId)
+    public static Trip Create(int driverId, int jeepneyId, int routeId)
     {
         if(!IdValidator.ValidateId(jeepneyId)) throw new DomainException("Invalid jeepney ID!");
         if (!IdValidator.ValidateId(routeId)) throw new DomainException("Invalid jeepney ID!");
 
         return new Trip
         {
+            DriverId = driverId,
             JeepneyId = jeepneyId,
             RouteId = routeId,
             DepartureTime = null,

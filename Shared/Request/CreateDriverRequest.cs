@@ -17,3 +17,8 @@ public record UpdateDriverRequest
     public DateTime? DateHired { get; set; }
 }
 
+public record CreateJeepneyRequest
+{
+
+}
+

@@ -15,21 +15,20 @@ public class DriverController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetDrivers()
     {
-
-        return Ok();
+        var result = await _driverService.GetAsync();
+        return Ok(result);
     }
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-
-        return Ok();
+        var result = await _driverService.GetByIdAsync(id);
+        return Ok(result);
     }
 
     [HttpPost] 
     public async Task<IActionResult> CreateDriver([FromBody] CreateDriverRequest request)
     {
         await _driverService.CreateAsync(request);
-
         return Ok();
     }
 
@@ -38,8 +37,8 @@ public class DriverController : ControllerBase
     {
         if (id != request.Id)
             return BadRequest("Id mismatch");
-
-
         return Ok();
     }
+
+
 }

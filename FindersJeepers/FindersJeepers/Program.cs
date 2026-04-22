@@ -1,5 +1,7 @@
+using FindersJeepers.Application;
 using FindersJeepers.Client.Pages;
 using FindersJeepers.Components;
+using FindersJeepers.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
@@ -15,6 +17,9 @@ builder.Services.AddRazorComponents()
 
 var connectionString = builder.Configuration.GetConnectionString("JeepDB");
 
+
+builder.Services.AddApplication()           // LFG YO?
+    .AddInfrastructure();
 builder.Services.AddDbContext<MyDbContext>(options => options.UseNpgsql(connectionString));
 
 var app = builder.Build();

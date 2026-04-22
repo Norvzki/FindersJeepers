@@ -10,43 +10,39 @@ public class DriverService : IDriverService
     }
     public async Task CreateAsync(CreateDriverRequest req)
     {
-        var transaction = _uow.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+        await _uow.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
         try
         {
             var driver = Driver.Create(req.FirstName, req.LastName, req.LicenseNumber, req.ContactNumber, req.DateHired);
+            await _uow.Drivers.AddAsync(driver);
             await _uow.SaveChangesAsync();
+            await _uow.CommitAsync();
         }
-        catch (Exception ex)
+        catch
         {
             await _uow.RollbackAsync();
-            throw ex;
+            throw;
         }
 
     }
-    public async Task AssignJeep(int driverId, int jeepId)
+    public async Task<List<GetDriverResponse>> GetAsync(int pageNumber = -1, int pageSize = -1)
     {
-        var driver = await _uow.Drivers.GetByIdAsync(driverId);
-        var jeep = await _uow.Jeepneys.GetByIdAsync(jeepId);
-        if (driver == null) throw new InvalidIdException("Invalid driver ID!");
-        if (jeep == null) throw new InvalidIdException("Invalid jeep ID!");
 
-        jeep.ChangeDriver(driver.Id); // wtf these methods are so THIN
-    }
-
-    public async Task<GetDriverResponse> GetByIdAsync(int driverId)
-    {
-        var driver = await _uow.Drivers.GetByIdAsync(driverId);
-        if (driver == null) throw new InvalidIdException("Invalid driver ID!");
-
-        return new GetDriverResponse
-        {
-            // stuff here
-        };
-    }
-    public async Task<List<GetDriverResponse>> GetAsync(int pageNumber, int pageSize)
-    {
         var query = _uow.Drivers.Get();
+
+        if (pageNumber == -1 && pageSize == -1)
+        {
+            return await query.Select(d => new GetDriverResponse
+            {
+                FirstName = d.FirstName,
+                DateHired = d.DateHired,
+                ContactNumber = d.ContactNumber,
+                Id = d.Id,
+                LastName = d.LastName,
+                LicenseNumber = d.LicenseNumber,
+            }).ToListAsync();
+        }
 
         var drivers = await query
             .Skip((pageNumber - 1) * pageSize)
@@ -55,7 +51,12 @@ public class DriverService : IDriverService
 
         return drivers.Select(d => new GetDriverResponse
         {
-
+            FirstName = d.FirstName,
+            DateHired = d.DateHired,
+            ContactNumber = d.ContactNumber,
+            Id = d.Id,
+            LastName = d.LastName,
+            LicenseNumber  = d.LicenseNumber,
         }).ToList();
     }
 
@@ -64,27 +65,67 @@ public class DriverService : IDriverService
 
     public async Task DeleteAsync(int driverId)
     {
-
+        throw new NotImplementedException();
     }
 
-    public async Task GetTrips(int driverId)
+    public async Task UpdateAsync(UpdateDriverRequest request)
     {
         throw new NotImplementedException();
     }
 
-    public Task UpdateAsync(UpdateDriverRequest request)
+    public async Task<GetDriverDetailResponse> GetByIdAsync(int driverId)
     {
-        throw new NotImplementedException();
-    }
+        var driver = await _uow.Drivers.GetByIdAsync(driverId);
+        if (driver == null) throw new InvalidIdException("Invalid driver ID!");
 
-    Task<GetDriverDetailResponse> IDriverService.GetByIdAsync(int driverId)
-    {
-        throw new NotImplementedException();
-    }
+        // this can actually be improved with single query.
+        var jeepQuery = _uow.Jeepneys.Get();
+        var routeQuery = _uow.Routes.Get();
+        var tripQuery = _uow.Trips.Get();
 
-    public Task<GetDriverDetailResponse> GetDetail(int driverId)
-    {
-        throw new NotImplementedException();
+        var jeepney = await jeepQuery.FirstOrDefaultAsync(x => x.DriverId == driver.Id);
+
+        Route? route = null;                    // start as null first
+        List<TripSummaryResponse>? trips = new();
+
+
+        if (jeepney != null)
+        {
+            route = await routeQuery.FirstOrDefaultAsync(x => x.Id == jeepney.RouteId);
+            trips = await tripQuery.Where(x => x.JeepneyId == jeepney.Id)
+                    .Select(x => new TripSummaryResponse
+                    {
+                        Id = x.Id,
+                        ArrivalTime = x.ArrivalTime,
+                        DepartureTime = x.DepartureTime,
+                        LogCount = x.Logs.Count,
+                        RouteCode = route == null ? null : route.RouteCode,
+                        Status = x.Status.ToString()
+                    })
+                    .ToListAsync();
+        }
+
+        return new GetDriverDetailResponse
+        {
+            Id = driver.Id,
+            FirstName = driver.FirstName,
+            LastName = driver.LastName,
+            ContactNumber = driver.ContactNumber,
+            LicenseNumber = driver.LicenseNumber,
+            DateHired = driver.DateHired,
+
+            TripHistory = trips,
+
+            AssignedJeepney = jeepney == null ? null : new JeepneySummaryResponse
+            {
+                BodyNumber = jeepney.BodyNumber,
+                Capacity = jeepney.Capacity,
+                DriverName = driver.FirstName + " " + driver.LastName,
+                PlateNumber = jeepney.PlateNumber,
+                RouteCode = route.RouteCode
+            },
+        };
+
     }
 }
 
