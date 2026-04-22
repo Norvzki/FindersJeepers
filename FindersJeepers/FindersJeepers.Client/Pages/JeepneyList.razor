@@ -145,9 +145,9 @@ else
     private bool _changeDriverDialogVisible = false;
     private bool _isEditing = false;
     private JeepneyForm _form = new();
-    private JeepneyDto? _selectedJeepney;
+    private GetJeepneyResponse? _selectedJeepney;
     private int _newDriverId;
-    private List<JeepneyDto>? _jeepneys;
+    private List<GetJeepneyResponse>? _jeepneys;
     private List<DriverOption> _availableDrivers = new();
     private List<RouteOption> _availableRoutes = new();
 
@@ -158,12 +158,12 @@ else
         CloseOnEscapeKey = true
     };
 
-    private IEnumerable<JeepneyDto> FilteredJeepneys => _jeepneys?
+    private IEnumerable<GetJeepneyResponse> FilteredJeepneys => _jeepneys?
         .Where(j =>
             string.IsNullOrWhiteSpace(_search) ||
             j.PlateNumber.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
             j.BodyNumber.Contains(_search, StringComparison.OrdinalIgnoreCase))
-        ?? Enumerable.Empty<JeepneyDto>();
+        ?? Enumerable.Empty<GetJeepneyResponse>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,7 +182,7 @@ else
             new() { Id = 2, RouteCode = "02B - SM-Colon" },
         };
 
-        _jeepneys = new List<JeepneyDto>
+        _jeepneys = new List<GetJeepneyResponse>
         {
             new() { Id = 1, PlateNumber = "ABX 1234", BodyNumber = "001", Capacity = 16, DriverName = "Juan Dela Cruz", RouteCode = "01A - Ayala-Carbon" },
             new() { Id = 2, PlateNumber = "CDY 5678", BodyNumber = "002", Capacity = 18, DriverName = "Maria Santos", RouteCode = "02B - SM-Colon" },
@@ -196,7 +196,7 @@ else
         _dialogVisible = true;
     }
 
-    private void OpenEditDialog(JeepneyDto jeepney)
+    private void OpenEditDialog(GetJeepneyResponse jeepney)
     {
         _form = new JeepneyForm
         {
@@ -209,7 +209,7 @@ else
         _dialogVisible = true;
     }
 
-    private void OpenChangeDriverDialog(JeepneyDto jeepney)
+    private void OpenChangeDriverDialog(GetJeepneyResponse jeepney)
     {
         _selectedJeepney = jeepney;
         _newDriverId = 0;
@@ -230,12 +230,10 @@ else
         _changeDriverDialogVisible = false;
     }
 
-    private async Task ConfirmDelete(JeepneyDto jeepney)
+    private async Task ConfirmDelete(GetJeepneyResponse jeepney)
     {
         // Replace with confirm dialog + await JeepneyService.DeleteAsync(jeepney.Id);
     }
-
-
 
     public class JeepneyForm
     {

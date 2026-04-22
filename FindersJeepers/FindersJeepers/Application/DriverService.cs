@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Data;
-public class DriverService
+public class DriverService : IDriverService
 {
     private readonly IUnitOfWork _uow;
 
@@ -8,13 +8,13 @@ public class DriverService
     {
         _uow = uow;
     }
-    public async Task AddAsync(string firstName, string lastName, string licenseNumber, string contactNumber, DateTime dateHired)
+    public async Task CreateAsync(CreateDriverRequest req)
     {
         var transaction = _uow.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
         try
         {
-            var driver = Driver.Create(firstName, lastName, licenseNumber, contactNumber, dateHired);
+            var driver = Driver.Create(req.FirstName, req.LastName, req.LicenseNumber, req.ContactNumber, req.DateHired);
             await _uow.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -22,7 +22,7 @@ public class DriverService
             await _uow.RollbackAsync();
             throw ex;
         }
-        
+
     }
     public async Task AssignJeep(int driverId, int jeepId)
     {
@@ -43,7 +43,7 @@ public class DriverService
         {
             // stuff here
         };
-     }
+    }
     public async Task<List<GetDriverResponse>> GetAsync(int pageNumber, int pageSize)
     {
         var query = _uow.Drivers.Get();
@@ -58,7 +58,7 @@ public class DriverService
 
         }).ToList();
     }
-    
+
     // DELETE DRIVERS HERE?? SOFT DELETE OR HARD DELETE?
     // Sir ALLOWED Soft Deletes sooo lets softdelete driver here.
 
@@ -67,6 +67,25 @@ public class DriverService
 
     }
 
+    public async Task GetTrips(int driverId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateAsync(UpdateDriverRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<GetDriverDetailResponse> IDriverService.GetByIdAsync(int driverId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<GetDriverDetailResponse> GetDetail(int driverId)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 
@@ -79,7 +98,3 @@ public class InvalidIdException : Exception
     }
 }
 
-public record GetDriverResponse
-{
-
-}

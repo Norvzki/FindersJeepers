@@ -147,7 +147,7 @@ else
 @code {
     [Parameter] public int Id { get; set; }
 
-    private JeepneyProfileDto? _jeepney;
+    private GetJeepneyDetailResponse? _jeepney;
     private List<BreadcrumbItem> _breadcrumbs = new();
 
     protected override async Task OnInitializedAsync()
@@ -155,7 +155,7 @@ else
         // Replace with: _jeepney = await JeepneyService.GetProfileAsync(Id);
         await Task.Delay(300);
 
-        _jeepney = new JeepneyProfileDto
+        _jeepney = new GetJeepneyDetailResponse
         {
             Id = Id,
             PlateNumber = "ABX 1234",
@@ -165,7 +165,7 @@ else
             DriverName = "Juan Dela Cruz",
             DriverId = 1,
             CurrentStatus = "OnGoing",
-            CurrentTrip = new TripSummary
+            CurrentTrip = new TripSummaryResponse
             {
                 Id = 5,
                 RouteCode = "01A",
@@ -173,7 +173,7 @@ else
                 DepartureTime = DateTime.Now.AddHours(-1),
                 LogCount = 3
             },
-            PastTrips = new List<TripSummary>
+            PastTrips = new List<TripSummaryResponse>
             {
                 new() { Id = 1, RouteCode = "01A", Status = "Completed", DepartureTime = DateTime.Now.AddDays(-1).AddHours(-3), ArrivalTime = DateTime.Now.AddDays(-1).AddHours(-1), LogCount = 6 },
                 new() { Id = 3, RouteCode = "01A", Status = "Completed", DepartureTime = DateTime.Now.AddDays(-2).AddHours(-4), ArrivalTime = DateTime.Now.AddDays(-2).AddHours(-2), LogCount = 5 },
@@ -194,33 +194,11 @@ else
 
     private Color GetStatusColor(string status) => status switch
     {
-        "OnGoing" => Color.Success,
-        "Waiting" => Color.Warning,
+        "OnGoing"   => Color.Success,
+        "Waiting"   => Color.Warning,
         "Completed" => Color.Default,
-        _ => Color.Default
+        _           => Color.Default
     };
 
-    public class JeepneyProfileDto
-    {
-        public int Id { get; set; }
-        public string PlateNumber { get; set; } = string.Empty;
-        public string BodyNumber { get; set; } = string.Empty;
-        public int Capacity { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-        public string DriverName { get; set; } = string.Empty;
-        public int DriverId { get; set; }
-        public string CurrentStatus { get; set; } = string.Empty;
-        public TripSummary? CurrentTrip { get; set; }
-        public List<TripSummary> PastTrips { get; set; } = new();
-    }
 
-    public class TripSummary
-    {
-        public int Id { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public DateTime? DepartureTime { get; set; }
-        public DateTime? ArrivalTime { get; set; }
-        public int LogCount { get; set; }
-    }
 }

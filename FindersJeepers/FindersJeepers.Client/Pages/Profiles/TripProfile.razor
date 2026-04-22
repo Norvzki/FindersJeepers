@@ -188,7 +188,7 @@ else
 }
 
 @* Log Stop Event Dialog *@
-<MudDialog @bind-IsVisible="_logDialogVisible" Options="_dialogOptions">
+<MudDialog Visible="_logDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Log Stop Event</MudText>
     </TitleContent>
@@ -223,7 +223,7 @@ else
 @code {
     [Parameter] public int Id { get; set; }
 
-    private TripProfileDto? _trip;
+    private GetTripDetailResponse? _trip;
     private List<BreadcrumbItem> _breadcrumbs = new();
     private bool _logDialogVisible = false;
     private LogForm _logForm = new();
@@ -255,7 +255,7 @@ else
             new() { Id = 4, Name = "Carbon Market" },
         };
 
-        _trip = new TripProfileDto
+        _trip = new GetTripDetailResponse
         {
             Id = Id,
             JeepneyId = 1,
@@ -266,7 +266,7 @@ else
             Capacity = 16,
             DepartureTime = DateTime.Now.AddHours(-1).AddMinutes(-20),
             ArrivalTime = null,
-            Logs = new List<TripLogDto>
+            Logs = new List<GetTripLogResponse>
             {
                 new() { StopName = "Ayala Center Cebu", EventType = "Departure", PassengerCount = 12, Timestamp = DateTime.Now.AddHours(-1).AddMinutes(-20) },
                 new() { StopName = "IT Park",           EventType = "Arrival",   PassengerCount = 9,  Timestamp = DateTime.Now.AddMinutes(-50) },
@@ -284,18 +284,18 @@ else
 
     private Color GetStatusColor(string status) => status switch
     {
-        "OnGoing" => Color.Success,
-        "Waiting" => Color.Warning,
+        "OnGoing"   => Color.Success,
+        "Waiting"   => Color.Warning,
         "Completed" => Color.Default,
-        _ => Color.Default
+        _           => Color.Default
     };
 
     private string GetStatusIcon(string status) => status switch
     {
-        "OnGoing" => Icons.Material.Filled.DirectionsBus,
-        "Waiting" => Icons.Material.Filled.HourglassTop,
+        "OnGoing"   => Icons.Material.Filled.DirectionsBus,
+        "Waiting"   => Icons.Material.Filled.HourglassTop,
         "Completed" => Icons.Material.Filled.CheckCircle,
-        _ => Icons.Material.Filled.Circle
+        _           => Icons.Material.Filled.Circle
     };
 
     private async Task StartTrip()
@@ -322,28 +322,6 @@ else
     {
         // Replace with: await TripService.LogStopEventAsync(Id, _logForm);
         _logDialogVisible = false;
-    }
-
-    public class TripProfileDto
-    {
-        public int Id { get; set; }
-        public int JeepneyId { get; set; }
-        public string PlateNumber { get; set; } = string.Empty;
-        public int RouteId { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public int Capacity { get; set; }
-        public DateTime? DepartureTime { get; set; }
-        public DateTime? ArrivalTime { get; set; }
-        public List<TripLogDto> Logs { get; set; } = new();
-    }
-
-    public class TripLogDto
-    {
-        public string StopName { get; set; } = string.Empty;
-        public string EventType { get; set; } = string.Empty;
-        public int PassengerCount { get; set; }
-        public DateTime Timestamp { get; set; }
     }
 
     public class LogForm

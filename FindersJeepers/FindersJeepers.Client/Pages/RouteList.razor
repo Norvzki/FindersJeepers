@@ -62,10 +62,10 @@ else
                         @if (route.Stops.Any())
                         {
                             <MudText Typo="Typo.caption" Class="mud-text-secondary mb-2">STOPS (@route.Stops.Count)</MudText>
-                            <MudList T="RouteStopDto" Dense="true" DisablePadding="true">
+                            <MudList T="RouteStopResponse" Dense="true" DisablePadding="true">
                                 @foreach (var stop in route.Stops.OrderBy(s => s.StopIndex))
                                 {
-                                    <MudListItem T="RouteStopDto">
+                                    <MudListItem T="RouteStopResponse">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
                                                 @stop.StopIndex
@@ -166,18 +166,18 @@ else
     private bool _stopsDialogVisible = false;
     private bool _isEditing = false;
     private RouteForm _form = new();
-    private RouteDto? _selectedRoute;
+    private GetRouteResponse? _selectedRoute;
     private List<EditableStop> _editableStops = new();
-    private List<RouteDto>? _routes;
+    private List<GetRouteResponse>? _routes;
     private List<LocationOption> _availableLocations = new();
 
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
     private DialogOptions _stopsDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
 
-    private IEnumerable<RouteDto> FilteredRoutes => _routes?
+    private IEnumerable<GetRouteResponse> FilteredRoutes => _routes?
         .Where(r => string.IsNullOrWhiteSpace(_search) ||
                     r.RouteCode.Contains(_search, StringComparison.OrdinalIgnoreCase))
-        ?? Enumerable.Empty<RouteDto>();
+        ?? Enumerable.Empty<GetRouteResponse>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -192,12 +192,12 @@ else
             new() { Id = 5, Name = "IT Park" },
         };
 
-        _routes = new List<RouteDto>
+        _routes = new List<GetRouteResponse>
         {
             new()
             {
                 Id = 1, RouteCode = "01A", LocationStart = "Ayala Center Cebu", LocationEnd = "Carbon Market",
-                Stops = new List<RouteStopDto>
+                Stops = new List<RouteStopResponse>
                 {
                     new() { StopIndex = 0, LocationName = "Ayala Center Cebu" },
                     new() { StopIndex = 1, LocationName = "IT Park" },
@@ -208,7 +208,7 @@ else
             new()
             {
                 Id = 2, RouteCode = "02B", LocationStart = "SM City Cebu", LocationEnd = "Colon Street",
-                Stops = new List<RouteStopDto>
+                Stops = new List<RouteStopResponse>
                 {
                     new() { StopIndex = 0, LocationName = "SM City Cebu" },
                     new() { StopIndex = 1, LocationName = "Colon Street" },
@@ -224,14 +224,14 @@ else
         _dialogVisible = true;
     }
 
-    private void OpenEditDialog(RouteDto route)
+    private void OpenEditDialog(GetRouteResponse route)
     {
         _form = new RouteForm { Id = route.Id, RouteCode = route.RouteCode };
         _isEditing = true;
         _dialogVisible = true;
     }
 
-    private void OpenStopsPanel(RouteDto route)
+    private void OpenStopsPanel(GetRouteResponse route)
     {
         _selectedRoute = route;
         _editableStops = route.Stops
@@ -257,10 +257,11 @@ else
         _stopsDialogVisible = false;
     }
 
-    private async Task ConfirmDelete(RouteDto route)
+    private async Task ConfirmDelete(GetRouteResponse route)
     {
         // Replace with confirm dialog + await RouteService.DeleteAsync(route.Id);
     }
+
 
     public class RouteForm
     {

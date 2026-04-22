@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 [Route("/api/driver")]
 public class DriverController : ControllerBase
 {
-    private readonly DriverService _driverService;
+    private readonly IDriverService _driverService;
 
-    public DriverController(DriverService driverService)
+    public DriverController(IDriverService driverService)
     {
         _driverService = driverService;
     }
@@ -28,6 +28,7 @@ public class DriverController : ControllerBase
     [HttpPost] 
     public async Task<IActionResult> CreateDriver([FromBody] CreateDriverRequest request)
     {
+        await _driverService.CreateAsync(request);
 
         return Ok();
     }

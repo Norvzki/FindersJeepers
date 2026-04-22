@@ -139,7 +139,7 @@ else
 @code {
     [Parameter] public int Id { get; set; }
 
-    private DriverProfileDto? _driver;
+    private GetDriverDetailResponse? _driver;
 
     private List<BreadcrumbItem> _breadcrumbs = new();
 
@@ -151,7 +151,7 @@ else
         // Replace with: _driver = await DriverService.GetProfileAsync(Id);
         await Task.Delay(300);
 
-        _driver = new DriverProfileDto
+        _driver = new GetDriverDetailResponse
         {
             Id = Id,
             FirstName = "Juan",
@@ -159,7 +159,7 @@ else
             LicenseNumber = "A01-23-456789",
             ContactNumber = "09171234567",
             DateHired = new DateTime(2021, 3, 15),
-            AssignedJeepney = new JeepneySummary
+            AssignedJeepney = new JeepneySummaryResponse
             {
                 Id = 1,
                 PlateNumber = "ABX 1234",
@@ -167,7 +167,7 @@ else
                 Capacity = 16,
                 RouteCode = "01A"
             },
-            TripHistory = new List<TripSummary>
+            TripHistory = new List<TripSummaryResponse>
             {
                 new() { Id = 1, RouteCode = "01A", Status = "Completed", DepartureTime = DateTime.Now.AddDays(-1).AddHours(-3), ArrivalTime = DateTime.Now.AddDays(-1).AddHours(-1) },
                 new() { Id = 3, RouteCode = "01A", Status = "Completed", DepartureTime = DateTime.Now.AddDays(-2).AddHours(-4), ArrivalTime = DateTime.Now.AddDays(-2).AddHours(-2) },
@@ -189,40 +189,12 @@ else
 
     private Color GetStatusColor(string status) => status switch
     {
-        "OnGoing" => Color.Success,
-        "Waiting" => Color.Warning,
+        "OnGoing"   => Color.Success,
+        "Waiting"   => Color.Warning,
         "Completed" => Color.Default,
-        _ => Color.Default
+        _           => Color.Default
     };
 
     // DTOs
-    public class DriverProfileDto
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string LicenseNumber { get; set; } = string.Empty;
-        public string ContactNumber { get; set; } = string.Empty;
-        public DateTime DateHired { get; set; }
-        public JeepneySummary? AssignedJeepney { get; set; }
-        public List<TripSummary> TripHistory { get; set; } = new();
-    }
 
-    public class JeepneySummary
-    {
-        public int Id { get; set; }
-        public string PlateNumber { get; set; } = string.Empty;
-        public string BodyNumber { get; set; } = string.Empty;
-        public int Capacity { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-    }
-
-    public class TripSummary
-    {
-        public int Id { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-        public DateTime? DepartureTime { get; set; }
-        public DateTime? ArrivalTime { get; set; }
-    }
 }

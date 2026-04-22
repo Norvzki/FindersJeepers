@@ -56,10 +56,10 @@ else
                         }
                         else
                         {
-                            <MudList T="JeepneySummary" Dense="true" DisablePadding="true">
+                            <MudList T="JeepneySummaryResponse" Dense="true" DisablePadding="true">
                                 @foreach (var j in _route.AssignedJeepneys)
                                 {
-                                    <MudListItem T="JeepneySummary">
+                                    <MudListItem T="JeepneySummaryResponse">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                                 <MudAvatar Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">
@@ -110,13 +110,14 @@ else
                             @foreach (var stop in _route.Stops.OrderBy(s => s.StopIndex))
                             {
                                 bool isFirst = stop.StopIndex == _route.Stops.Min(s => s.StopIndex);
-                                bool isLast = stop.StopIndex == _route.Stops.Max(s => s.StopIndex);
+                                bool isLast  = stop.StopIndex == _route.Stops.Max(s => s.StopIndex);
 
-                                <MudTimelineItem Color="@(isFirst || isLast ? Color.Primary : Color.Default)"
-                                                 Size="@(isFirst || isLast ? Size.Medium : Size.Small)"
-                                                 Variant="@(isFirst || isLast ? Variant.Filled : Variant.Outlined)">
+                                <MudTimelineItem
+                                    Color="@(isFirst || isLast ? Color.Primary : Color.Default)"
+                                    Size="@(isFirst || isLast ? Size.Medium : Size.Small)"
+                                    Variant="@(isFirst || isLast ? Variant.Filled : Variant.Outlined)">
                                     <ItemDot>
-                                        <MudIcon Icon="@(isFirst? Icons.Material.Filled.TripOrigin : isLast? Icons.Material.Filled.Place : Icons.Material.Filled.FiberManualRecord)"
+                                        <MudIcon Icon="@(isFirst ? Icons.Material.Filled.TripOrigin : isLast ? Icons.Material.Filled.Place : Icons.Material.Filled.FiberManualRecord)"
                                                  Size="Size.Small" />
                                     </ItemDot>
                                     <ItemContent>
@@ -149,7 +150,7 @@ else
 @code {
     [Parameter] public int Id { get; set; }
 
-    private RouteProfileDto? _route;
+    private GetRouteDetailResponse? _route;
     private List<BreadcrumbItem> _breadcrumbs = new();
 
     protected override async Task OnInitializedAsync()
@@ -157,20 +158,20 @@ else
         // Replace with: _route = await RouteService.GetProfileAsync(Id);
         await Task.Delay(300);
 
-        _route = new RouteProfileDto
+        _route = new GetRouteDetailResponse
         {
             Id = Id,
             RouteCode = "01A",
             LocationStart = "Ayala Center Cebu",
             LocationEnd = "Carbon Market",
-            Stops = new List<StopDto>
+            Stops = new List<RouteStopResponse>
             {
                 new() { StopIndex = 0, LocationName = "Ayala Center Cebu" },
                 new() { StopIndex = 1, LocationName = "IT Park" },
                 new() { StopIndex = 2, LocationName = "Colon Street" },
                 new() { StopIndex = 3, LocationName = "Carbon Market" },
             },
-            AssignedJeepneys = new List<JeepneySummary>
+            AssignedJeepneys = new List<JeepneySummaryResponse>
             {
                 new() { Id = 1, PlateNumber = "ABX 1234", DriverName = "Juan Dela Cruz" },
                 new() { Id = 2, PlateNumber = "CDY 5678", DriverName = "Maria Santos" },
@@ -189,26 +190,5 @@ else
         // Replace with manage stops dialog or navigate to edit
     }
 
-    public class RouteProfileDto
-    {
-        public int Id { get; set; }
-        public string RouteCode { get; set; } = string.Empty;
-        public string LocationStart { get; set; } = string.Empty;
-        public string LocationEnd { get; set; } = string.Empty;
-        public List<StopDto> Stops { get; set; } = new();
-        public List<JeepneySummary> AssignedJeepneys { get; set; } = new();
-    }
 
-    public class StopDto
-    {
-        public int StopIndex { get; set; }
-        public string LocationName { get; set; } = string.Empty;
-    }
-
-    public class JeepneySummary
-    {
-        public int Id { get; set; }
-        public string PlateNumber { get; set; } = string.Empty;
-        public string DriverName { get; set; } = string.Empty;
-    }
 }

@@ -120,7 +120,7 @@ else
     private bool _dialogVisible = false;
     private bool _isEditing = false;
     private DriverForm _form = new();
-    private List<DriverDto>? _drivers;
+    private List<GetDriverResponse>? _drivers;
 
     private DialogOptions _dialogOptions = new()
     {
@@ -129,18 +129,18 @@ else
         CloseOnEscapeKey = true
     };
 
-    private IEnumerable<DriverDto> FilteredDrivers => _drivers?
+    private IEnumerable<GetDriverResponse> FilteredDrivers => _drivers?
         .Where(d =>
             string.IsNullOrWhiteSpace(_search) ||
             $"{d.FirstName} {d.LastName}".Contains(_search, StringComparison.OrdinalIgnoreCase) ||
             d.LicenseNumber.Contains(_search, StringComparison.OrdinalIgnoreCase))
-        ?? Enumerable.Empty<DriverDto>();
+        ?? Enumerable.Empty<GetDriverResponse>();
 
     protected override async Task OnInitializedAsync()
     {
         // Replace with: _drivers = await DriverService.GetAllAsync();
         await Task.Delay(500);
-        _drivers = new List<DriverDto>
+        _drivers = new List<GetDriverResponse>
         {
             new() { Id = 1, FirstName = "Juan", LastName = "Dela Cruz", LicenseNumber = "A01-23-456789", ContactNumber = "09171234567", DateHired = new DateTime(2021, 3, 15) },
             new() { Id = 2, FirstName = "Maria", LastName = "Santos", LicenseNumber = "B02-45-678901", ContactNumber = "09281234567", DateHired = new DateTime(2020, 7, 1) },
@@ -156,7 +156,7 @@ else
 
     }
 
-    private void OpenEditDialog(DriverDto driver)
+    private void OpenEditDialog(GetDriverResponse driver)
     {
         _form = new DriverForm
         {
@@ -183,7 +183,7 @@ else
         CloseDialog();
     }
 
-    private async Task ConfirmDelete(DriverDto driver)
+    private async Task ConfirmDelete(GetDriverResponse driver)
     {
         // Replace with: show MudDialog confirm, then await DriverService.DeleteAsync(driver.Id);
     }
