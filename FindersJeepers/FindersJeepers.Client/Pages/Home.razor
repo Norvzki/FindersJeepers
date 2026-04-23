@@ -1,5 +1,146 @@
 ﻿@page "/"
+@using MudBlazor
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<MudText>This page should serve as the dashboard but its still empty for now :)</MudText>
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-6">
+    <MudText Typo="Typo.h4" Class="mb-1 fw-bold">Dashboard</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Overview of your fleet, drivers and recent activity.</MudText>
+
+    <!-- Stats -->
+    <MudGrid Spacing="3" Class="mb-4">
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="1" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_jeepneyCount</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Jeepneys</MudText>
+                    </MudStack>
+                    <MudAvatar Color="Color.Secondary" Size="Size.Large" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("jeepneys"))">View Jeepneys</MudButton>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="1" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_driverCount</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Drivers</MudText>
+                    </MudStack>
+                    <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("drivers"))">View Drivers</MudButton>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="1" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_locationCount</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Locations</MudText>
+                    </MudStack>
+                    <MudAvatar Color="Color.Info" Size="Size.Large" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.Place" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("locations"))">View Locations</MudButton>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="3">
+            <MudCard Elevation="1" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack>
+                        <MudText Typo="Typo.h6" Class="fw-bold">@_routeCount</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Routes</MudText>
+                    </MudStack>
+                    <MudAvatar Color="Color.Warning" Size="Size.Large" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.Route" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("routes"))">View Routes</MudButton>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Main content -->
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-4" Elevation="0" Style="min-height:260px;">
+                <MudText Typo="Typo.h6" Class="mb-2 fw-bold">Recent Activity</MudText>
+                @if (!_recentActivity.Any())
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No recent activity.</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-4" Elevation="0" Style="min-height:260px;">
+                <MudText Typo="Typo.h6" Class="mb-2 fw-bold">Quick Actions</MudText>
+                <MudStack Spacing="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => NavigateTo("jeepneys?add=true"))">
+                        Add Jeepney
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="@(() => NavigateTo("drivers?add=true"))">
+                        Add Driver
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Place" OnClick="@(() => NavigateTo("locations"))">
+                        Manage Locations
+                    </MudButton>
+                    <MudDivider />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Use these shortcuts to quickly navigate to common pages.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private int _jeepneyCount;
+    private int _driverCount;
+    private int _locationCount;
+    private int _routeCount;
+
+    private List<string> _recentActivity = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Temporary demo data — replace with your service calls
+        await Task.Delay(300);
+
+        _jeepneyCount = 12;
+        _driverCount = 8;
+        _locationCount = 5;
+        _routeCount = 6;
+
+        _recentActivity = new List<string>
+        {
+            "Jeepney ABX 1234 was assigned to Juan Dela Cruz.",
+            "Driver Maria Santos updated contact number.",
+            "Route 02B schedule updated.",
+            "New location added: Carbon Terminal."
+        };
+    }
+
+    private void NavigateTo(string path)
+    {
+        // Simple navigation helper — adjust routes to match your app
+        if (path.StartsWith("/"))
+            Navigation.NavigateTo(path);
+        else
+            Navigation.NavigateTo("/" + path.TrimStart('/'));
+    }
+}
