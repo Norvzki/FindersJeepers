@@ -18,6 +18,12 @@ public class JeepneyController : ControllerBase
         var result = await jeepService.GetAsync();
         return Ok(result);
     }
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetJeepneyById(int id)
+    {
+        var result = await jeepService.GetByIdAsync(id);
+        return Ok(result);
+    }
     [HttpPost]
     public async Task<IActionResult> CreateJeepney([FromBody] CreateJeepneyRequest req)
     {

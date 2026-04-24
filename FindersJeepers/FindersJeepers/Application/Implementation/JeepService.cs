@@ -40,50 +40,63 @@ public class JeepService : IJeepService
     public async Task<GetJeepneyDetailResponse> GetByIdAsync(int jeepId)
     {
         var jeep = await _uow.Jeepneys.GetByIdAsync(jeepId);
+        if (jeep == null) throw new InvalidIdException("Invalid jeepney ID!");
+
         var route = await _uow.Routes.GetByIdAsync(jeep.RouteId);
+
+        var assignedDriverIds = jeep.Drivers
+            .Where(jd => jd.UnassignedAt == null)
+            .Select(jd => jd.DriverId)
+            .ToList();
+
         var drivers = await _uow.Drivers.Get()
-            .Where(d => jeep.IsADriver(d.Id))
-            .Select(d => new DriverSummary { Id = d.Id, Name = d.FirstName + " " + d.LastName })
-            .ToListAsync();
-        var pastTrips = await (
-            from pt in _uow.Trips.Get()
-            join r in _uow.Routes.Get() on pt.RouteId equals r.Id
-            select new TripSummaryResponse
+            .Where(d => assignedDriverIds.Contains(d.Id))
+            .Select(d => new DriverSummary
             {
-                ArrivalTime = pt.ArrivalTime,
-                DepartureTime = pt.DepartureTime,
-                Id = pt.Id,
-                LogCount = pt.Logs.Count,
-                RouteCode = r.RouteCode,
-                Status = pt.Status.ToString()
+                Id = d.Id,
+                Name = d.FirstName + " " + d.LastName
             })
             .ToListAsync();
 
         var currentTrip = await _uow.Trips.Get()
-            .Where(x => x.JeepneyId == jeep.Id && x.Status == TripStatus.OnGoing)
-            .Join(_uow.Routes.Get(), x => x.RouteId, r => r.Id, (x, r) => 
-            new TripSummaryResponse
+            .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.OnGoing)
+            .Select(t => new TripSummaryResponse
             {
-                ArrivalTime = x.ArrivalTime,
-                DepartureTime = x.DepartureTime,
-                Id =x.Id,
-                LogCount = x.Logs.Count,
-                RouteCode = r.RouteCode // i dont have this,
-            }).FirstOrDefaultAsync();
+                Id = t.Id,
+                ArrivalTime = t.ArrivalTime,
+                DepartureTime = t.DepartureTime,
+                LogCount = t.Logs.Count,
+                RouteCode = route.RouteCode,
+                Status = t.Status.ToString()
+            })
+            .FirstOrDefaultAsync();
+
+        var pastTrips = await _uow.Trips.Get()
+            .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.Completed)
+            .Select(t => new TripSummaryResponse
+            {
+                Id = t.Id,
+                ArrivalTime = t.ArrivalTime,
+                DepartureTime = t.DepartureTime,
+                LogCount = t.Logs.Count,
+                RouteCode = route.RouteCode,
+                Status = t.Status.ToString()
+            })
+            .ToListAsync();
 
         return new GetJeepneyDetailResponse
         {
+            Id = jeep.Id,
+            PlateNumber = jeep.PlateNumber,
             BodyNumber = jeep.BodyNumber,
             Capacity = jeep.Capacity,
-            CurrentStatus = currentTrip == null ? "OnGoing" : "Waiting",
+            RouteCode = route.RouteCode,
+            CurrentStatus = currentTrip != null ? "OnGoing" : "Waiting",
             CurrentTrip = currentTrip,
             AssignedDrivers = drivers,
-            Id = jeep.Id,
-            PastTrips = pastTrips,
-            PlateNumber = jeep.PlateNumber,
-            RouteCode = route.RouteCode
+            PastTrips = pastTrips
         };
-    }   
+    }
 
     public Task UpdateAsync(UpdateJeepneyRequest request)
     {
