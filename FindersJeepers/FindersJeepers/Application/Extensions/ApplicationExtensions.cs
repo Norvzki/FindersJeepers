@@ -8,6 +8,7 @@ public static class DependencyInjection
         services.AddScoped<ILocationService, LocationService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IRouteService, RouteService>();
+        services.AddScoped<IOptionService, OptionService>();
 
         return services;
     }
