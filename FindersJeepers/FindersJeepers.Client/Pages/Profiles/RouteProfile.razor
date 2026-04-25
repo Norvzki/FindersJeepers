@@ -56,10 +56,10 @@ else
                         }
                         else
                         {
-                            <MudList T="JeepneySummaryResponse" Dense="true" DisablePadding="true">
+                            <MudList T="GetJeepneySummaryResponse" Dense="true" DisablePadding="true">
                                 @foreach (var j in _route.AssignedJeepneys)
                                 {
-                                    <MudListItem T="JeepneySummaryResponse">
+                                    <MudListItem T="GetJeepneySummaryResponse">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                                 <MudAvatar Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">
@@ -164,14 +164,14 @@ else
             RouteCode = "01A",
             LocationStart = "Ayala Center Cebu",
             LocationEnd = "Carbon Market",
-            Stops = new List<RouteStopResponse>
+            Stops = new List<GetRouteStopResponse>
             {
                 new() { StopIndex = 0, LocationName = "Ayala Center Cebu" },
                 new() { StopIndex = 1, LocationName = "IT Park" },
                 new() { StopIndex = 2, LocationName = "Colon Street" },
                 new() { StopIndex = 3, LocationName = "Carbon Market" },
             },
-            AssignedJeepneys = new List<JeepneySummaryResponse>
+            AssignedJeepneys = new List<GetJeepneySummaryResponse>
             {
                 new() { Id = 1, PlateNumber = "ABX 1234", DriverName = "Juan Dela Cruz" },
                 new() { Id = 2, PlateNumber = "CDY 5678", DriverName = "Maria Santos" },

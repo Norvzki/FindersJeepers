@@ -120,7 +120,7 @@ else
     private JeepneyForm _form = new();
     private GetJeepneyResponse? _selectedJeepney;
     private List<GetJeepneyResponse>? _jeepneys;
-    private List<RouteSummaryResponse> _availableRoutes = new();
+    private List<GetRouteSummaryResponse> _availableRoutes = new();
 
     private DialogOptions _dialogOptions = new()
     {
@@ -146,7 +146,7 @@ else
     private async Task LoadData()
     {
         _jeepneys = await Http.GetFromJsonAsync<List<GetJeepneyResponse>>("/api/v1/jeepneys");
-        _availableRoutes = await Http.GetFromJsonAsync<List<RouteSummaryResponse>>("/api/v1/routes/");
+        _availableRoutes = await Http.GetFromJsonAsync<List<GetRouteSummaryResponse>>("/api/v1/routes/");
     }
 
     private void OpenAddDialog()

@@ -64,10 +64,10 @@ else
                         @if (route.Stops.Any())
                         {
                             <MudText Typo="Typo.caption" Class="mud-text-secondary mb-2">STOPS (@route.Stops.Count)</MudText>
-                            <MudList T="RouteStopResponse" Dense="true" DisablePadding="true">
+                            <MudList T="GetRouteStopResponse" Dense="true" DisablePadding="true">
                                 @foreach (var stop in route.Stops.OrderBy(s => s.StopIndex))
                                 {
-                                    <MudListItem T="RouteStopResponse">
+                                    <MudListItem T="GetRouteStopResponse">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                             <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
                                                 @stop.StopIndex

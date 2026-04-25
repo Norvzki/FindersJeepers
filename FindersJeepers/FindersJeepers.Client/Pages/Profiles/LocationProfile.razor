@@ -72,10 +72,10 @@ else
                         }
                         else
                         {
-                            <MudList T="RouteSummaryResponse" Dense="true" DisablePadding="true">
+                            <MudList T="GetRouteSummaryResponse" Dense="true" DisablePadding="true">
                                 @foreach (var route in _location.Routes)
                                 {
-                                    <MudListItem T="RouteSummaryResponse">
+                                    <MudListItem T="GetRouteSummaryResponse">
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                                 <MudAvatar Color="Color.Tertiary" Size="Size.Small" Variant="Variant.Filled">
@@ -202,12 +202,12 @@ else
             Id = Id,
             Name = "Ayala Center Cebu",
             Description = "Main commercial hub in Cebu City.",
-            Routes = new List<RouteSummaryResponse>
+            Routes = new List<GetRouteSummaryResponse>
             {
                 new() { Id = 1, RouteCode = "01A", LocationStart = "Ayala Center Cebu", LocationEnd = "Carbon Market" },
                 new() { Id = 3, RouteCode = "03C", LocationStart = "Ayala Center Cebu", LocationEnd = "SM City Cebu" },
             },
-            StopOccurrences = new List<RouteStopOccurrenceResponse>
+            StopOccurrences = new List<GetRouteStopOccurrenceResponse>
             {
                 new() { RouteId = 1, RouteCode = "01A", StopIndex = 0 },
                 new() { RouteId = 2, RouteCode = "02B", StopIndex = 2 },
