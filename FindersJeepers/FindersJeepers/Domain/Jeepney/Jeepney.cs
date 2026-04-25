@@ -51,8 +51,5 @@ public class Jeepney : AggregateRoot
         driver.Deactivate();
     }
 
-    public bool IsADriver(int driverId) => _drivers.Any(x => x.DriverId == driverId && x.UnassignedAt == null);
-
-
 
 }
