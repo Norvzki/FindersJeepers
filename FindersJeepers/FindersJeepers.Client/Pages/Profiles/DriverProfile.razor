@@ -60,6 +60,15 @@ else
                         <CardHeaderContent>
                             <MudText Typo="Typo.h6" Class="fw-bold">Assigned Jeepneys</MudText>
                         </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.AddCircleOutline"
+                                       OnClick="OpenAssignJeepneysDialog">
+                                Assign Jeepneys
+                            </MudButton>
+                        </CardHeaderActions>
                     </MudCardHeader>
                     <MudDivider />
                     <MudCardContent>
@@ -178,6 +187,78 @@ else
     </DialogActions>
 </MudDialog>
 
+@* Assign Jeepneys Dialog *@
+<MudDialog Visible="_assignJeepneysVisible" Options="_assignDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="fw-bold">Assign Jeepneys</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_availableJeepneys is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (!_availableJeepneys.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No jeepneys available to assign.</MudAlert>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">
+                Select one or more jeepneys to assign to this driver.
+            </MudText>
+            <MudStack Spacing="2">
+                @foreach (var jeepney in _availableJeepneys)
+                {
+                    bool isSelected = _selectedJeepneyIds.Contains(jeepney.Id);
+                    <MudPaper Outlined="true"
+                              Style="@($"border-radius:8px; cursor:pointer; border-color: {(isSelected ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
+                              Class="@($"pa-3 {(isSelected ? "mud-primary-hover" : "")}")"
+                              @onclick="() => ToggleJeepney(jeepney.Id)">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudCheckBox Value="isSelected"
+                                         Color="Color.Primary"
+                                         ReadOnly="true" />
+                            <MudAvatar Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                            </MudAvatar>
+                            <MudStack Spacing="0" Style="flex:1;">
+                                <MudText Typo="Typo.body1" Class="fw-bold">@jeepney.PlateNumber</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    Body #@jeepney.BodyNumber · Route: @jeepney.RouteCode · Capacity: @jeepney.Capacity
+                                </MudText>
+                            </MudStack>
+                            <MudStack Spacing="0" AlignItems="AlignItems.End">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@(jeepney.NumberOfDrivers == 0 ? Color.Warning : Color.Default)"
+                                         Variant="Variant.Outlined">
+                                    @jeepney.NumberOfDrivers driver(s)
+                                </MudChip>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 px-2">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                @_selectedJeepneyIds.Count jeepney(s) selected
+            </MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton OnClick="CloseAssignDialog">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@(!_selectedJeepneyIds.Any())"
+                           OnClick="ConfirmAssign">
+                    Assign
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter] public int Id { get; set; }
 
@@ -195,6 +276,10 @@ else
         FullWidth = true,
         CloseOnEscapeKey = true
     };
+    private bool _assignJeepneysVisible = false;
+    private List<JeepneyOption>? _availableJeepneys;
+    private HashSet<int> _selectedJeepneyIds = new();
+
 
 
     protected override async Task OnInitializedAsync()
@@ -212,7 +297,6 @@ else
     private async Task LoadData()
     {
         _driver = await Http.GetFromJsonAsync<GetDriverDetailResponse>($"/api/v1/drivers/{Id}");
-
     }
 
     private void OpenEditDialog(GetDriverDetailResponse driver) // change
@@ -235,10 +319,10 @@ else
         var payload = new UpdateDriverRequest
             {
                 FirstName = _form.FirstName,
-            LastName = _form.LastName,
-            ContactNumber = _form.ContactNumber,
-            LicenseNumber = _form.LicenseNumber,
-            Id = _form.Id
+                LastName = _form.LastName,
+                ContactNumber = _form.ContactNumber,
+                LicenseNumber = _form.LicenseNumber,
+                Id = _form.Id
             };
 
         var response = await Http.PutAsJsonAsync($"/api/v1/drivers/{Id}", payload);
@@ -274,6 +358,39 @@ else
         public string ContactNumber { get; set; } = string.Empty;
         public DateTime? DateHired { get; set; }
     }
+    /*ASSIGN JEEPNEYS DIALOG*/
+    private DialogOptions _assignDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
 
+    private async Task OpenAssignJeepneysDialog()
+    {
+        _selectedJeepneyIds = new();
+        _availableJeepneys = null;
+        _assignJeepneysVisible = true;
+        _availableJeepneys = await Http.GetFromJsonAsync<List<JeepneyOption>>($"/api/v1/options/jeeps/available-for-driver/{Id}");
+
+    }
+
+    private void ToggleJeepney(int jeepneyId)
+    {
+        if (!_selectedJeepneyIds.Add(jeepneyId))
+            _selectedJeepneyIds.Remove(jeepneyId);
+    }
+
+    private void CloseAssignDialog()
+    {
+        _assignJeepneysVisible = false;
+        _selectedJeepneyIds = new();
+    }
+
+    private async Task ConfirmAssign()
+    {
+        _assignJeepneysVisible = false;
+        _selectedJeepneyIds = new();
+    }
 }
 
