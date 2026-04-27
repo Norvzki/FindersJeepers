@@ -368,7 +368,7 @@ else
 
     private async Task OpenAssignJeepneysDialog()
     {
-        _selectedJeepneyIds = new();
+        _selectedJeepneyIds = _driver.AssignedJeepneys.Select(x => x.Id).ToHashSet();
         _availableJeepneys = null;
         _assignJeepneysVisible = true;
         _availableJeepneys = await Http.GetFromJsonAsync<List<JeepneyOption>>($"/api/v1/options/jeeps/available-for-driver/{Id}");
@@ -389,6 +389,22 @@ else
 
     private async Task ConfirmAssign()
     {
+        var payload = new AssignJeepneysRequest
+        {
+            DriverId = Id,
+            JeepIds = _selectedJeepneyIds.ToList()
+        };
+
+        var response = await Http.PutAsJsonAsync($"/api/v1/drivers/jeepneys/{Id}", payload);
+
+        if(response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Assigned Jeepneys Successfully!");
+        } else
+        {
+            Snackbar.Add("Something went wrong...");
+        }
+
         _assignJeepneysVisible = false;
         _selectedJeepneyIds = new();
     }
