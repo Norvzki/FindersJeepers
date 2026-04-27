@@ -14,8 +14,8 @@ public class TripLog // belongs to trip
 
     public static TripLog Create(int tripId, int stopId, int passengerCount, TripLogType eventType) 
     {
-        if (IdValidator.ValidateId(tripId)) throw new DomainException("Invalid Trip Id!");
-        if (IdValidator.ValidateId(stopId)) throw new DomainException("Invalid Stop Id");
+        if (!IdValidator.ValidateId(tripId)) throw new DomainException("Invalid Trip Id!");
+        if (!IdValidator.ValidateId(stopId)) throw new DomainException("Invalid Stop Id");
         if (passengerCount < 0) throw new DomainException("Passenger count cannot be lower than zero!");
 
         return new TripLog
