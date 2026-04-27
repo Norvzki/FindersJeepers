@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Data;
 public class DriverService : IDriverService
 {
@@ -12,9 +13,9 @@ public class DriverService : IDriverService
 
     public async Task CreateAsync(CreateDriverRequest req)
     {
-            var driver = Driver.Create(req.FirstName, req.LastName, req.LicenseNumber, req.ContactNumber, req.DateHired);
-            await _uow.Drivers.AddAsync(driver);
-            await _uow.SaveChangesAsync();
+        var driver = Driver.Create(req.FirstName, req.LastName, req.LicenseNumber, req.ContactNumber, req.DateHired);
+        await _uow.Drivers.AddAsync(driver);
+        await _uow.SaveChangesAsync();
     }
     public async Task<List<GetDriverResponse>> GetAsync(int pageNumber = -1, int pageSize = -1)
     {
@@ -46,7 +47,7 @@ public class DriverService : IDriverService
             ContactNumber = d.ContactNumber,
             Id = d.Id,
             LastName = d.LastName,
-            LicenseNumber  = d.LicenseNumber,
+            LicenseNumber = d.LicenseNumber,
         }).ToList();
     }
 
@@ -129,6 +130,37 @@ public class DriverService : IDriverService
         };
     }
 
-    
+    public async Task AssignJeepneysAsync(AssignJeepneysRequest request)
+    {
+        var driver = await _uow.Drivers.GetByIdAsync(request.DriverId);
+        if (driver == null) throw new KeyNotFoundException("Driver not found");
+
+        var currentJeeps = await _uow.Jeepneys.Get()
+            .Where(x => x.Drivers.Any(d => d.DriverId == driver.Id && d.UnassignedAt == null))
+            .ToListAsync();
+
+        var currentJeepIds = currentJeeps.Select(x => x.Id).ToList();
+
+        foreach (var jeep in currentJeeps.Where(j => !request.JeepIds.Contains(j.Id)))
+        {
+            jeep.RemoveDriver(driver.Id);
+            _uow.Jeepneys.Update(jeep);
+        }
+        var idsToAdd = request.JeepIds.Except(currentJeepIds);
+        foreach (var jeepId in idsToAdd)
+        {
+            var jeep = await _uow.Jeepneys.GetByIdAsync(jeepId);
+            if (jeep != null)
+            {
+                jeep.AssignDriver(driver.Id);
+                _uow.Jeepneys.Update(jeep);
+            }
+        }
+        await _uow.SaveChangesAsync();
+    }
+
+
+
 }
+
 
