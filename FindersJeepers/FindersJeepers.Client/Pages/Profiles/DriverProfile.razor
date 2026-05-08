@@ -21,7 +21,17 @@ else
                         @_driver.FirstName[0]@_driver.LastName[0]
                     </MudAvatar>
                     <MudText Typo="Typo.h5" Class="fw-bold">@_driver.FirstName @_driver.LastName</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">@_driver.LicenseNumber</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_driver.LicenseNumber</MudText>
+
+                    @* ── Status indicator ── *@
+                    <MudChip T="string"
+                             Color="@(IsOnTrip ? Color.Success : Color.Default)"
+                             Variant="Variant.Filled"
+                             Size="Size.Small"
+                             Icon="@(IsOnTrip ? Icons.Material.Filled.DirectionsCar : Icons.Material.Filled.Circle)"
+                             Class="mb-4">
+                        @(IsOnTrip ? "On a Trip" : "Idle")
+                    </MudChip>
 
                     <MudDivider Class="w-100 mb-4" />
 
@@ -42,19 +52,74 @@ else
 
                     <MudDivider Class="w-100 my-4" />
 
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
-                               StartIcon="@Icons.Material.Filled.Edit" OnClick="() => OpenEditDialog(_driver)">
-                        Edit Profile
-                    </MudButton>
+                    <MudStack Spacing="2" Class="w-100">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Success"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                                   Disabled="@IsOnTrip"
+                                   OnClick="OpenStartTripDialog">
+                            Start New Trip
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Edit" OnClick="() => OpenEditDialog(_driver)">
+                            Edit Profile
+                        </MudButton>
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
         </MudItem>
 
-        @* ── Right column: jeepney + trips ── *@
+        @* ── Right column ── *@
         <MudItem xs="12" md="8">
             <MudStack Spacing="4">
 
-                @* Assigned Jeepneys *@
+                @* ── Current Trip ── *@
+                @if (CurrentTrip is not null)
+                {
+                    <MudCard Elevation="2" Style="border-radius:14px; border:2px solid var(--mud-palette-success);">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.DirectionsCar" Color="Color.Success" />
+                                    <MudText Typo="Typo.h6" Class="fw-bold">Current Trip</MudText>
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@GetStatusColor(CurrentTrip.Status)"
+                                             Variant="Variant.Filled">
+                                        @CurrentTrip.Status
+                                    </MudChip>
+                                </MudStack>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                               Href="@($"/trips/{CurrentTrip.Id}")" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudDivider />
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Trip ID</MudText>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">#@CurrentTrip.Id</MudText>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Jeep Used</MudText>
+                                    <MudText Typo="Typo.body1" Class="fw-bold">@(CurrentTrip.RouteCode ?? "—")</MudText>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Route</MudText>
+                                    <MudText Typo="Typo.body1">@CurrentTrip.RouteCode</MudText>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Departed</MudText>
+                                    <MudText Typo="Typo.body1">@(CurrentTrip.DepartureTime?.ToString("hh:mm tt") ?? "—")</MudText>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                }
+
+                @* ── Assigned Jeepneys ── *@
                 <MudCard Elevation="2" Style="border-radius:14px;">
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -93,7 +158,6 @@ else
                                                 </MudText>
                                             </MudStack>
                                             <MudSpacer />
-                                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="() => HandleStartTripAsync(jeepney.Id)">Start Trip</MudButton>
                                             <MudButton Variant="Variant.Text" Color="Color.Primary"
                                                        Href="@($"/jeepneys/{jeepney.Id}")">
                                                 View
@@ -107,7 +171,7 @@ else
                     </MudCardContent>
                 </MudCard>
 
-                @* Trip History *@
+                @* ── Trip History (Completed only) ── *@
                 <MudCard Elevation="2" Style="border-radius:14px;">
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -116,31 +180,27 @@ else
                     </MudCardHeader>
                     <MudDivider />
                     <MudCardContent>
-                        @if (!_driver.TripHistory.Any())
+                        @if (!CompletedTrips.Any())
                         {
-                            <MudAlert Severity="Severity.Info" Dense="true">No trips recorded yet.</MudAlert>
+                            <MudAlert Severity="Severity.Info" Dense="true">No completed trips recorded yet.</MudAlert>
                         }
                         else
                         {
-                            <MudTable Items="_driver.TripHistory" Dense="true" Hover="true" Elevation="0">
+                            <MudTable T="TripSummary" Items="CompletedTrips" Dense="true" Hover="true" Elevation="0">
                                 <HeaderContent>
                                     <MudTh>Trip ID</MudTh>
+                                    <MudTh>Jeep</MudTh>
                                     <MudTh>Route</MudTh>
                                     <MudTh>Departed</MudTh>
                                     <MudTh>Arrived</MudTh>
-                                    <MudTh>Status</MudTh>
                                     <MudTh></MudTh>
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd>#@context.Id</MudTd>
+                                    <MudTd>@(context.RouteCode ?? "—")</MudTd>
                                     <MudTd>@context.RouteCode</MudTd>
                                     <MudTd>@(context.DepartureTime?.ToString("MMM dd, hh:mm tt") ?? "—")</MudTd>
                                     <MudTd>@(context.ArrivalTime?.ToString("MMM dd, hh:mm tt") ?? "—")</MudTd>
-                                    <MudTd>
-                                        <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)" Variant="Variant.Filled">
-                                            @context.Status
-                                        </MudChip>
-                                    </MudTd>
                                     <MudTd>
                                         <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small"
                                                        Href="@($"/trips/{context.Id}")" />
@@ -156,7 +216,108 @@ else
     </MudGrid>
 }
 
-@* Add/Edit Dialog *@
+@* ══════════════════════════════════════════ *@
+@*  Start Trip Dialog                         *@
+@* ══════════════════════════════════════════ *@
+<MudDialog Visible="_startTripVisible" Options="_startTripDialogOptions" OnBackdropClick="CloseStartTripDialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" />
+            <MudText Typo="Typo.h6" Class="fw-bold">Start New Trip</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_startTripJeeps is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+        }
+        else if (!_startTripJeeps.Any())
+        {
+            <MudAlert Severity="Severity.Warning">No jeepneys assigned to this driver.</MudAlert>
+        }
+        else
+        {
+            @* ── Step 1: Pick a jeep ── *@
+            <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Select a Jeepney</MudText>
+            <MudStack Spacing="2" Class="mb-4">
+                @foreach (var jeep in _startTripJeeps)
+                {
+                    bool isSelected = _startTripSelectedJeepId == jeep.Id;
+                    bool unavailable = !jeep.IsAvailable;
+
+                    <MudPaper Outlined="true"
+                              Style="@($"border-radius:8px; cursor:{(unavailable ? "not-allowed" : "pointer")}; opacity:{(unavailable ? "0.75" : "1")}; border-color:{( isSelected ? "var(--mud-palette-success)" : unavailable ? "var(--mud-palette-error)" : "var(--mud-palette-lines-default)")}")"
+                              Class="@($"pa-3 {(isSelected ? "mud-success-hover" : "")}")"
+                              @onclick="() => { if (!unavailable) _startTripSelectedJeepId = jeep.Id; }">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudAvatar Color="@(unavailable? Color.Error: Color.Secondary)"
+                                       Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                            </MudAvatar>
+                            <MudStack Spacing="0" Style="flex:1;">
+                                <MudText Typo="Typo.body1" Class="fw-bold">@jeep.PlateNumber</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    Body #@jeep.BodyNumber · Route: @jeep.RouteCode · Cap: @jeep.Capacity
+                                </MudText>
+                                @if (unavailable && !string.IsNullOrEmpty(jeep.CurrentDriverName))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Error">
+                                        Currently driven by @jeep.CurrentDriverName
+                                    </MudText>
+                                }
+                            </MudStack>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(unavailable ? Color.Error : Color.Success)"
+                                     Variant="Variant.Outlined">
+                                @(unavailable ? "On a Trip" : "Available")
+                            </MudChip>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+
+            @* ── Step 2: Direction ── *@
+            <MudDivider Class="mb-3" />
+            <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Select Direction</MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudPaper Outlined="true"
+                          Style="@($"border-radius:8px; cursor:pointer; flex:1; border-color:{(_startTripDirection == RouteDirection.Forward ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
+                          Class="@($"pa-3 {(_startTripDirection == RouteDirection.Forward ? "mud-primary-hover" : "")}")"
+                          @onclick="() => _startTripDirection = RouteDirection.Forward">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
+                                 Color="@(_startTripDirection == RouteDirection.Forward ? Color.Primary : Color.Default)" />
+                        <MudText Typo="Typo.body2" Class="fw-bold">Forward</MudText>
+                    </MudStack>
+                </MudPaper>
+                <MudPaper Outlined="true"
+                          Style="@($"border-radius:8px; cursor:pointer; flex:1; border-color:{(_startTripDirection == RouteDirection.Return ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
+                          Class="@($"pa-3 {(_startTripDirection == RouteDirection.Return ? "mud-primary-hover" : "")}")"
+                          @onclick="() => _startTripDirection = RouteDirection.Return">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowBack"
+                                 Color="@(_startTripDirection == RouteDirection.Return ? Color.Primary : Color.Default)" />
+                        <MudText Typo="Typo.body2" Class="fw-bold">Returning</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseStartTripDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.PlayArrow"
+                   Disabled="@(_startTripSelectedJeepId is null)"
+                   OnClick="ConfirmStartTrip">
+            Start Trip
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* ══════════════════════════════════════════ *@
+@*  Edit Driver Dialog                        *@
+@* ══════════════════════════════════════════ *@
 <MudDialog Visible="_dialogVisible" Options="_dialogOptions" OnBackdropClick="CloseDialog">
     <TitleContent>
         <MudText Typo="Typo.h6">Edit Driver</MudText>
@@ -182,13 +343,13 @@ else
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="CloseDialog">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDriver">
-            Save Changes
-        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveDriver">Save Changes</MudButton>
     </DialogActions>
 </MudDialog>
 
-@* Assign Jeepneys Dialog *@
+@* ══════════════════════════════════════════ *@
+@*  Assign Jeepneys Dialog                    *@
+@* ══════════════════════════════════════════ *@
 <MudDialog Visible="_assignJeepneysVisible" Options="_assignDialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6" Class="fw-bold">Assign Jeepneys</MudText>
@@ -212,13 +373,11 @@ else
                 {
                     bool isSelected = _selectedJeepneyIds.Contains(jeepney.Id);
                     <MudPaper Outlined="true"
-                              Style="@($"border-radius:8px; cursor:pointer; border-color: {(isSelected ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
+                              Style="@($"border-radius:8px; cursor:pointer; border-color:{(isSelected ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
                               Class="@($"pa-3 {(isSelected ? "mud-primary-hover" : "")}")"
                               @onclick="() => ToggleJeepney(jeepney.Id)">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-                            <MudCheckBox Value="isSelected"
-                                         Color="Color.Primary"
-                                         ReadOnly="true" />
+                            <MudCheckBox Value="isSelected" Color="Color.Primary" ReadOnly="true" />
                             <MudAvatar Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Medium">
                                 <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
                             </MudAvatar>
@@ -228,14 +387,11 @@ else
                                     Body #@jeepney.BodyNumber · Route: @jeepney.RouteCode · Capacity: @jeepney.Capacity
                                 </MudText>
                             </MudStack>
-                            <MudStack Spacing="0" AlignItems="AlignItems.End">
-                                <MudChip T="string"
-                                         Size="Size.Small"
-                                         Color="@(jeepney.NumberOfDrivers == 0 ? Color.Warning : Color.Default)"
-                                         Variant="Variant.Outlined">
-                                    @jeepney.NumberOfDrivers driver(s)
-                                </MudChip>
-                            </MudStack>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(jeepney.NumberOfDrivers == 0 ? Color.Warning : Color.Default)"
+                                     Variant="Variant.Outlined">
+                                @jeepney.NumberOfDrivers driver(s)
+                            </MudChip>
                         </MudStack>
                     </MudPaper>
                 }
@@ -249,8 +405,7 @@ else
             </MudText>
             <MudStack Row="true" Spacing="2">
                 <MudButton OnClick="CloseAssignDialog">Cancel</MudButton>
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
                            Disabled="@(!_selectedJeepneyIds.Any())"
                            OnClick="ConfirmAssign">
                     Assign
@@ -266,32 +421,47 @@ else
     private DriverDetail? _driver;
     private List<BreadcrumbItem> _breadcrumbs = new();
     private DriverForm _form = new();
+
     private int YearsOfService =>
         _driver is null ? 0 : (int)((DateTime.Now - _driver.DateHired).TotalDays / 365);
+
+    // ── Driver status ──
+    private bool IsOnTrip =>
+        _driver?.TripHistory.Any(t => t.Status is "OnGoing" or "Waiting") ?? false;
+
+    private TripSummary? CurrentTrip =>
+        _driver?.TripHistory.FirstOrDefault(t => t.Status is "OnGoing" or "Waiting");
+
+    private IEnumerable<TripSummary> CompletedTrips =>
+        _driver?.TripHistory.Where(t => t.Status == "Completed") ?? Enumerable.Empty<TripSummary>();
+
+    // ── Edit dialog ──
     private bool _dialogVisible = false;
-    private void CloseDialog() => _dialogVisible = false;
     private bool _isEditing = false;
-    private DialogOptions _dialogOptions = new()
-    {
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true,
-        CloseOnEscapeKey = true
-    };
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+    private void CloseDialog() => _dialogVisible = false;
+
+    // ── Start Trip dialog ──
+    private bool _startTripVisible = false;
+    private List<JeepneySummary>? _startTripJeeps;
+    private int? _startTripSelectedJeepId;
+    private RouteDirection _startTripDirection = RouteDirection.Forward;
+    private DialogOptions _startTripDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+
+    // ── Assign Jeepneys dialog ──
     private bool _assignJeepneysVisible = false;
     private List<JeepneyOption>? _availableJeepneys;
     private HashSet<int> _selectedJeepneyIds = new();
-
-
+    private DialogOptions _assignDialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
 
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(300);
-
         await LoadData();
         _breadcrumbs = new List<BreadcrumbItem>
         {
             new("Drivers", href: "/drivers"),
-            new($"{_driver.FirstName} {_driver.LastName}", href: null, disabled: true)
+            new($"{_driver!.FirstName} {_driver.LastName}", href: null, disabled: true)
         };
     }
 
@@ -300,26 +470,49 @@ else
         _driver = await Http.GetFromJsonAsync<DriverDetail>($"/api/v1/drivers/{Id}");
     }
 
-    public async Task HandleStartTripAsync(int jeepId)
+    // ── Start Trip ──
+    private async Task OpenStartTripDialog()
     {
+        _startTripSelectedJeepId = null;
+        _startTripDirection = RouteDirection.Forward;
+        _startTripJeeps = null;
+        _startTripVisible = true;
+        _startTripJeeps = _driver.AssignedJeepneys;
+    }
+
+    private void CloseStartTripDialog()
+    {
+        _startTripVisible = false;
+        _startTripSelectedJeepId = null;
+    }
+
+    private async Task ConfirmStartTrip()
+    {
+        if (_startTripSelectedJeepId is null) return;
+
         var request = new StartTripRequest
-            {
-                JeepId = jeepId,
-                Direction = RouteDirection.Forward,
-                DriverId = Id
-            };
+        {
+            JeepId = _startTripSelectedJeepId.Value,
+            Direction = _startTripDirection,
+            DriverId = Id
+        };
+
         var response = await Http.PostAsJsonAsync("/api/v1/trips", request);
 
-        if(response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            Snackbar.Add("Trip started successfully!");
-        } else
+            Snackbar.Add("Trip started successfully!", Severity.Success);
+            CloseStartTripDialog();
+            await LoadData();
+        }
+        else
         {
-            Snackbar.Add("Something went wrong...");
+            Snackbar.Add("Something went wrong.", Severity.Error);
         }
     }
 
-    private void OpenEditDialog(DriverDetail driver) // change
+    // ── Edit ──
+    private void OpenEditDialog(DriverDetail driver)
     {
         _form = new DriverForm
         {
@@ -334,61 +527,36 @@ else
         _dialogVisible = true;
         StateHasChanged();
     }
+
     private async Task SaveDriver()
     {
         var payload = new UpdateDriverRequest
-            {
-                FirstName = _form.FirstName,
-                LastName = _form.LastName,
-                ContactNumber = _form.ContactNumber,
-                LicenseNumber = _form.LicenseNumber,
-                Id = _form.Id
-            };
+        {
+            FirstName = _form.FirstName,
+            LastName = _form.LastName,
+            ContactNumber = _form.ContactNumber,
+            LicenseNumber = _form.LicenseNumber,
+            Id = _form.Id
+        };
 
         var response = await Http.PutAsJsonAsync($"/api/v1/drivers/{Id}", payload);
 
-        if(response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            Snackbar.Add("Driver updated successfully!");
+            Snackbar.Add("Driver updated successfully!", Severity.Success);
             CloseDialog();
             await LoadData();
-        } else
-        {
-            Snackbar.Add("Something went wrong.");
         }
-
+        else
+        {
+            Snackbar.Add("Something went wrong.", Severity.Error);
+        }
     }
 
-
-    private Color GetStatusColor(string status) => status switch
-    {
-        "OnGoing"   => Color.Success,
-        "Waiting"   => Color.Warning,
-        "Completed" => Color.Default,
-        _           => Color.Default
-    };
-
-
-    public class DriverForm
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string LicenseNumber { get; set; } = string.Empty;
-        public string ContactNumber { get; set; } = string.Empty;
-        public DateTime? DateHired { get; set; }
-    }
-    /*ASSIGN JEEPNEYS DIALOG*/
-    private DialogOptions _assignDialogOptions = new()
-    {
-        MaxWidth = MaxWidth.Small,
-        FullWidth = true,
-        CloseOnEscapeKey = true
-    };
-
+    // ── Assign Jeepneys ──
     private async Task OpenAssignJeepneysDialog()
     {
-        _selectedJeepneyIds = _driver.AssignedJeepneys.Select(x => x.Id).ToHashSet();
+        _selectedJeepneyIds = _driver!.AssignedJeepneys?.Select(x => x.Id).ToHashSet() ?? new();
         _availableJeepneys = null;
         _assignJeepneysVisible = true;
         _availableJeepneys = await Http.GetFromJsonAsync<List<JeepneyOption>>($"/api/v1/options/jeeps/available-for-driver/{Id}");
@@ -416,17 +584,49 @@ else
 
         var response = await Http.PutAsJsonAsync($"/api/v1/drivers/jeepneys/{Id}", payload);
 
-        if(response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            Snackbar.Add("Assigned Jeepneys Successfully!");
+            Snackbar.Add("Assigned Jeepneys Successfully!", Severity.Success);
             await LoadData();
-        } else
+        }
+        else
         {
-            Snackbar.Add("Something went wrong...");
+            Snackbar.Add("Something went wrong...", Severity.Error);
         }
 
         _assignJeepneysVisible = false;
         _selectedJeepneyIds = new();
     }
-}
 
+    private Color GetStatusColor(string status) => status switch
+    {
+        "OnGoing" => Color.Success,
+        "Waiting" => Color.Warning,
+        "Completed" => Color.Default,
+        _ => Color.Default
+    };
+
+    public class DriverForm
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string LicenseNumber { get; set; } = string.Empty;
+        public string ContactNumber { get; set; } = string.Empty;
+        public DateTime? DateHired { get; set; }
+    }
+
+    // ── New DTO for the Start Trip jeep picker ──
+    // Needs a new backend endpoint: GET /api/v1/options/jeeps/start-trip/{driverId}
+    // Returns the driver's assigned jeepneys enriched with live trip status.
+    public class StartTripJeepOption
+    {
+        public int Id { get; set; }
+        public string PlateNumber { get; set; } = string.Empty;
+        public string BodyNumber { get; set; } = string.Empty;
+        public string RouteCode { get; set; } = string.Empty;
+        public int Capacity { get; set; }
+        public bool IsAvailable { get; set; }          // false = currently on a trip
+        public string? CurrentDriverName { get; set; } // who's driving it right now
+    }
+}
