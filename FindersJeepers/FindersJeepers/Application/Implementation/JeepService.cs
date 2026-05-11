@@ -43,7 +43,7 @@ public class JeepService : IJeepService
         var drivers = await GetJeepneyDriversAsync(jeepId);
 
         var currentTrip = await _uow.Trips.Get()
-            .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.OnGoing)
+            .Where(t => t.JeepneyId == jeep.Id && (t.Status == TripStatus.OnGoing || t.Status == TripStatus.Waiting))
             .Join(_uow.Drivers.Get(), t=>t.DriverId, d=>d.Id, (t, d) => new { Trip = t, Driver = d })
             .Select(t => new TripSummary
             {
@@ -92,7 +92,7 @@ public class JeepService : IJeepService
             CurrentStatus = currentTrip != null ? "OnGoing" : "Waiting",
             CurrentTrip = currentTrip,
             AssignedDrivers = drivers,
-            PastTrips = pastTrips
+            PastTrips = pastTrips,
         };
     }
     public Task UpdateAsync(UpdateJeepneyRequest request)
