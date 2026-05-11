@@ -1,0 +1,64 @@
+﻿@using MudBlazor
+
+<MudCard Elevation="2" Style="border-radius:14px;">
+    <MudCardContent Class="d-flex flex-column align-items-center text-center pa-6">
+
+        <MudAvatar Color="Color.Primary" Style="width:80px;height:80px;font-size:2rem;" Class="mb-3">
+            @Driver.FirstName[0]@Driver.LastName[0]
+        </MudAvatar>
+
+        <MudText Typo="Typo.h5" Class="fw-bold">@Driver.FirstName @Driver.LastName</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@Driver.LicenseNumber</MudText>
+
+        <MudChip T="string"
+                 Color="@(IsOnTrip ? Color.Success : Color.Default)"
+                 Variant="Variant.Filled"
+                 Size="Size.Small"
+                 Icon="@(IsOnTrip ? Icons.Material.Filled.DirectionsCar : Icons.Material.Filled.Circle)"
+                 Class="mb-4">
+            @(IsOnTrip ? "On a Trip" : "Idle")
+        </MudChip>
+
+        <MudDivider Class="w-100 mb-4" />
+
+        <MudStack Spacing="2" Class="w-100 text-start">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">@Driver.ContactNumber</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">Hired @Driver.DateHired.ToString("MMMM dd, yyyy")</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">@YearsOfService yr(s) of service</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudDivider Class="w-100 my-4" />
+
+        <MudStack Spacing="2" Class="w-100">
+            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@IsOnTrip"
+                       OnClick="OnStartTripClick">
+                Start New Trip
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.Edit"
+                       OnClick="OnEditClick">
+                Edit Profile
+            </MudButton>
+        </MudStack>
+
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public DriverDetail Driver { get; set; } = null!;
+    [Parameter] public bool IsOnTrip { get; set; }
+    [Parameter] public int YearsOfService { get; set; }
+    [Parameter] public EventCallback OnEditClick { get; set; }
+    [Parameter] public EventCallback OnStartTripClick { get; set; }
+}

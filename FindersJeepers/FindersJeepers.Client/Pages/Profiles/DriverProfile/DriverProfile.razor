@@ -1,0 +1,75 @@
+﻿@page "/drivers/{Id:int}"
+@using FindersJeepers.Client.Pages.Profiles.DriverProfile.Components
+@using MudBlazor
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+@if (_vm?.Driver is null)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else
+{
+    <MudBreadcrumbs Items="_vm.Breadcrumbs" Class="mb-4 px-0" />
+
+    <MudGrid Spacing="4">
+
+        <MudItem xs="12" md="4">
+            <DriverProfileCard Driver="_vm.Driver"
+                               IsOnTrip="_vm.IsOnTrip"
+                               YearsOfService="_vm.YearsOfService"
+                               OnEditClick="_vm.OpenEditDialog"
+                               OnStartTripClick="_vm.OpenStartTripDialog" />
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudStack Spacing="4">
+
+                @if (_vm.CurrentTrip is not null)
+                {
+                    <CurrentTripCard Trip="_vm.CurrentTrip" />
+                }
+
+                <AssignedJeepneysCard AssignedJeepneys="_vm.Driver.AssignedJeepneys"
+                                      OnAssignClick="async () => await _vm.OpenAssignJeepneysDialogAsync()" />
+
+                <TripHistoryCard Trips="_vm.CompletedTrips" />
+
+            </MudStack>
+        </MudItem>
+
+    </MudGrid>
+
+    <StartTripDialog Visible="_vm.StartTripVisible"
+                     Jeeps="_vm.StartTripJeeps"
+                     SelectedJeepId="_vm.StartTripSelectedJeepId"
+                     SelectedJeepIdChanged="id => _vm.StartTripSelectedJeepId = id"
+                     Direction="_vm.StartTripDirection"
+                     DirectionChanged="dir => _vm.StartTripDirection = dir"
+                     OnCancel="_vm.CloseStartTripDialog"
+                     OnConfirm="async () => await _vm.ConfirmStartTripAsync()" />
+
+    <EditDriverDialog Visible="_vm.EditDialogVisible"
+                      Form="_vm.Form"
+                      OnCancel="_vm.CloseEditDialog"
+                      OnSave="async () => await _vm.SaveDriverAsync()" />
+
+    <AssignJeepneysDialog Visible="_vm.AssignJeepneysVisible"
+                          AvailableJeepneys="_vm.AvailableJeepneys"
+                          SelectedJeepneyIds="_vm.SelectedJeepneyIds"
+                          OnToggleJeepney="id => _vm.ToggleJeepney(id)"
+                          OnCancel="_vm.CloseAssignDialog"
+                          OnConfirm="async () => await _vm.ConfirmAssignAsync()" />
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private DriverDetailViewModel? _vm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _vm = new DriverDetailViewModel(Http, Snackbar);
+        await _vm.InitializeAsync(Id);
+    }
+}

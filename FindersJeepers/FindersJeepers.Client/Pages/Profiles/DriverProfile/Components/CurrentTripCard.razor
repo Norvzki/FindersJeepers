@@ -1,0 +1,51 @@
+﻿@using MudBlazor
+
+<MudCard Elevation="2" Style="border-radius:14px; border:2px solid var(--mud-palette-success);">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.DirectionsCar" Color="Color.Success" />
+                <MudText Typo="Typo.h6" Class="fw-bold">Current Trip</MudText>
+                <MudChip T="string" Size="Size.Small"
+                         Color="@StatusColor(Trip.Status)" Variant="Variant.Filled">
+                    @Trip.Status
+                </MudChip>
+            </MudStack>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Href="@($"/trips/{Trip.Id}")" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudDivider />
+    <MudCardContent>
+        <MudGrid>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Trip ID</MudText>
+                <MudText Typo="Typo.body1" Class="fw-bold">#@Trip.Id</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Jeep</MudText>
+                <MudText Typo="Typo.body1" Class="fw-bold">@(Trip.JeepneyPlateNumber ?? "—")</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Route</MudText>
+                <MudText Typo="Typo.body1">@Trip.RouteCode</MudText>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Departed</MudText>
+                <MudText Typo="Typo.body1">@(Trip.DepartureTime?.ToString("hh:mm tt") ?? "—")</MudText>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public TripSummary Trip { get; set; } = null!;
+
+    private static Color StatusColor(string s) => s switch
+    {
+        "OnGoing" => Color.Success,
+        "Waiting" => Color.Warning,
+        _ => Color.Default
+    };
+}
