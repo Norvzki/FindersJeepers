@@ -72,6 +72,7 @@ public class DriverService : IDriverService
     {
         var driver = await _uow.Drivers.GetByIdAsync(driverId);
         if (driver == null) throw new InvalidIdException("Invalid driver ID!");
+
         var jeepneyData = await _uow.Jeepneys.Get()
             .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))
             .Join(_uow.Routes.Get(),
@@ -106,37 +107,28 @@ public class DriverService : IDriverService
                 IsAvailable = currentTrip == null, // wtf?
                 CurrentDriverName = driverName
             });
-        }
+        }   
 
         var jeepneyIds = jeepneyData.Select(x => x.Jeepney.Id).ToList();
         var routesByJeepneyId = jeepneyData.ToDictionary(x => x.Jeepney.Id, x => x.Route.RouteCode);
+
         var trips = await _uow.Trips.Get()
-            .Where(t => jeepneyIds.Contains(t.JeepneyId) && t.DriverId == driverId)
-            .Join(_uow.Jeepneys.Get(), t=>t.DriverId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
-            .Select(t => new
+            .Where(t=>t.DriverId == driverId)
+            .Join(_uow.Jeepneys.Get(), t=>t.JeepneyId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
+            .Select(t => new TripSummary
             {
-                t.Trip.Id,
-                t.Trip.JeepneyId,
-                t.Trip.ArrivalTime,
-                t.Trip.DepartureTime,
-                t.Trip.Status,
+                Id = t.Trip.Id,
+                ArrivalTime = t.Trip.ArrivalTime,
+                DepartureTime = t.Trip.DepartureTime,
                 LogCount = t.Trip.Logs.Count,
-                t.Jeepney.PlateNumber
+                RouteCode = routesByJeepneyId.GetValueOrDefault(t.Jeepney.Id, string.Empty),
+                Status = t.Trip.Status.ToString(),
+                JeepneyPlateNumber = t.Jeepney.PlateNumber
             })
             .ToListAsync();
 
-        var tripSummaries = trips
-            .Select(t => new TripSummary
-            {
-                Id = t.Id,
-                ArrivalTime = t.ArrivalTime,
-                DepartureTime = t.DepartureTime,
-                LogCount = t.LogCount,
-                RouteCode = routesByJeepneyId.GetValueOrDefault(t.JeepneyId, string.Empty),
-                Status = t.Status.ToString(),
-                JeepneyPlateNumber = t.PlateNumber
-            })
-            .ToList();
+        
+
 
         return new DriverDetail
         {
@@ -147,7 +139,7 @@ public class DriverService : IDriverService
             LicenseNumber = driver.LicenseNumber,
             DateHired = driver.DateHired,
             AssignedJeepneys = assignedJeepneys,
-            TripHistory = tripSummaries
+            TripHistory = trips
         };
     }
 
