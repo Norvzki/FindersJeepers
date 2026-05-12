@@ -1,0 +1,63 @@
+﻿@using MudBlazor
+
+<MudDialog Visible="Visible" Options="_options">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
+            <MudText Typo="Typo.h6" Class="fw-bold">Manage Drivers</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                       OnClick="OnAssignClick">
+                Assign Drivers
+            </MudButton>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (AssignedDrivers is null || !AssignedDrivers.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No drivers assigned yet.</MudAlert>
+        }
+        else
+        {
+            <MudList T="JeepneyDriverDto" DisablePadding="true">
+                @foreach (var driver in AssignedDrivers)
+                {
+                    <MudListItem T="JeepneyDriverDto" Class="px-0">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudAvatar Color="Color.Primary" Size="Size.Medium" Variant="Variant.Filled">
+                                @driver.FirstName.First()
+                            </MudAvatar>
+                            <MudStack Spacing="0" Style="flex:1;">
+                                <MudText Typo="Typo.body1" Class="fw-bold">@driver.FirstName @driver.LastName</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    Assigned @driver.AssignedAt.ToString("MMM dd, yyyy")
+                                </MudText>
+                            </MudStack>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                       Size="Size.Small" Href="@($"/drivers/{driver.Id}")">
+                                View
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonRemove"
+                                           Color="Color.Error" Size="Size.Small"
+                                           OnClick="() => OnRemoveDriver.InvokeAsync(driver)" />
+                        </MudStack>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnClose">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public List<JeepneyDriverDto>? AssignedDrivers { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnAssignClick { get; set; }
+    [Parameter] public EventCallback<JeepneyDriverDto> OnRemoveDriver { get; set; }
+
+    private readonly DialogOptions _options = new()
+    { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+}

@@ -1,0 +1,70 @@
+﻿@using MudBlazor
+
+<MudDialog Visible="Visible" Options="_options">
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="fw-bold">Assign Drivers</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (AvailableDrivers is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (!AvailableDrivers.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No drivers available to assign.</MudAlert>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">
+                Select drivers to add to this jeepney.
+            </MudText>
+            <MudStack Spacing="2">
+                @foreach (var driver in AvailableDrivers)
+                {
+                    bool sel = SelectedDriverIds.Contains(driver.Id);
+                    <MudPaper Outlined="true"
+                              Style="@($"border-radius:8px; cursor:pointer; border-color:{(sel ? "var(--mud-palette-primary)" : "var(--mud-palette-lines-default)")}")"
+                              Class="pa-3"
+                              @onclick="() => OnToggleDriver.InvokeAsync(driver.Id)">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudCheckBox Value="sel" Color="Color.Primary" ReadOnly="true" />
+                            <MudAvatar Color="Color.Primary" Size="Size.Medium" Variant="Variant.Filled">
+                                @driver.FirstName.First()
+                            </MudAvatar>
+                            <MudText Typo="Typo.body2" Class="fw-bold" Style="flex:1;">
+                                @driver.FirstName @driver.LastName
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 px-2">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                @SelectedDriverIds.Count driver(s) selected
+            </MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton OnClick="OnCancel">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           Disabled="@(!SelectedDriverIds.Any())"
+                           OnClick="OnConfirm">
+                    Assign
+                </MudButton>
+            </MudStack>
+        </MudStack>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public List<DriverOption>? AvailableDrivers { get; set; }
+    [Parameter, EditorRequired] public HashSet<int> SelectedDriverIds { get; set; } = new();
+    [Parameter] public EventCallback<int> OnToggleDriver { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    private readonly DialogOptions _options = new()
+    { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+}

@@ -79,28 +79,49 @@ public class DriverService : IDriverService
                 r => r.Id,
                 (j, r) => new { Jeepney = j, Route = r })
             .ToListAsync();
-        var assignedJeepneys = jeepneyData
-            .Select(x => new JeepneySummary
+
+        var assignedJeepneys = new List<JeepneySummary>();
+
+        foreach (var x in jeepneyData)
+        {
+            var currentTrip = await _uow.Trips.GetCurrentTripByJeepneyAsync(x.Jeepney.Id);
+
+            string driverName = string.Empty;
+            if (currentTrip != null)
+            {
+                var d = await _uow.Drivers.GetByIdAsync(currentTrip.DriverId);
+                if (d != null)
+                {
+                    driverName = $"{d.FirstName} {d.LastName}";
+                }
+            }
+
+            assignedJeepneys.Add(new JeepneySummary
             {
                 Id = x.Jeepney.Id,
                 PlateNumber = x.Jeepney.PlateNumber,
                 BodyNumber = x.Jeepney.BodyNumber,
                 Capacity = x.Jeepney.Capacity,
-                RouteCode = x.Route.RouteCode
-            })
-            .ToList();
+                RouteCode = x.Route.RouteCode,
+                IsAvailable = currentTrip == null, // wtf?
+                CurrentDriverName = driverName
+            });
+        }
+
         var jeepneyIds = jeepneyData.Select(x => x.Jeepney.Id).ToList();
         var routesByJeepneyId = jeepneyData.ToDictionary(x => x.Jeepney.Id, x => x.Route.RouteCode);
         var trips = await _uow.Trips.Get()
             .Where(t => jeepneyIds.Contains(t.JeepneyId) && t.DriverId == driverId)
+            .Join(_uow.Jeepneys.Get(), t=>t.DriverId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
             .Select(t => new
             {
-                t.Id,
-                t.JeepneyId,
-                t.ArrivalTime,
-                t.DepartureTime,
-                t.Status,
-                LogCount = t.Logs.Count
+                t.Trip.Id,
+                t.Trip.JeepneyId,
+                t.Trip.ArrivalTime,
+                t.Trip.DepartureTime,
+                t.Trip.Status,
+                LogCount = t.Trip.Logs.Count,
+                t.Jeepney.PlateNumber
             })
             .ToListAsync();
 
@@ -112,7 +133,8 @@ public class DriverService : IDriverService
                 DepartureTime = t.DepartureTime,
                 LogCount = t.LogCount,
                 RouteCode = routesByJeepneyId.GetValueOrDefault(t.JeepneyId, string.Empty),
-                Status = t.Status.ToString()
+                Status = t.Status.ToString(),
+                JeepneyPlateNumber = t.PlateNumber
             })
             .ToList();
 

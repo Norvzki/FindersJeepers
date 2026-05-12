@@ -20,6 +20,11 @@ var connectionString = builder.Configuration.GetConnectionString("JeepDB");
 
 builder.Services.AddApplication()           // LFG YO?
     .AddInfrastructure();
+
+builder.Services.AddScoped<DriverDetailViewModel>();
+builder.Services.AddScoped<JeepneyDetailViewModel>();
+
+
 builder.Services.AddDbContext<MyDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped(sp => new HttpClient

@@ -1,0 +1,55 @@
+﻿@using MudBlazor
+
+<MudCard Elevation="2" Style="border-radius:14px;">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6" Class="fw-bold">Assigned Jeepneys</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.AddCircleOutline"
+                       OnClick="OnAssignClick">
+                Assign Jeepneys
+            </MudButton>
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudDivider />
+    <MudCardContent>
+        @if (AssignedJeepneys is null || !AssignedJeepneys.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No jeepney currently assigned to this driver.</MudAlert>
+        }
+        else
+        {
+            <MudList T="JeepneySummary" Padding="false">
+                @foreach (var j in AssignedJeepneys)
+                {
+                    <MudListItem T="JeepneySummary">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudAvatar Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                            </MudAvatar>
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.subtitle1" Class="fw-bold">@j.PlateNumber</MudText>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                    Body #@j.BodyNumber · Capacity: @j.Capacity · Route: @j.RouteCode
+                                </MudText>
+                            </MudStack>
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                       Href="@($"/jeepneys/{j.Id}")">
+                                View
+                            </MudButton>
+                        </MudStack>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public List<JeepneySummary>? AssignedJeepneys { get; set; }
+    [Parameter] public EventCallback OnAssignClick { get; set; }
+}

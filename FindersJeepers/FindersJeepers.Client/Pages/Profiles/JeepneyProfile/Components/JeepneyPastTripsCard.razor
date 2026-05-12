@@ -1,0 +1,47 @@
+﻿@using MudBlazor
+
+<MudCard Elevation="2" Style="border-radius:14px;">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6" Class="fw-bold">Past Trips</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudDivider />
+    <MudCardContent>
+        @if (!Trips.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No past trips recorded.</MudAlert>
+        }
+        else
+        {
+            <MudTable T="TripSummary" Items="Trips" Dense="true" Hover="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Trip ID</MudTh>
+                    <MudTh>Driver</MudTh>
+                    <MudTh>Route</MudTh>
+                    <MudTh>Departed</MudTh>
+                    <MudTh>Arrived</MudTh>
+                    <MudTh>Logs</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>#@context.Id</MudTd>
+                    <MudTd>@(context.Driver?.Name ?? "—")</MudTd>
+                    <MudTd>@context.RouteCode</MudTd>
+                    <MudTd>@(context.DepartureTime?.ToString("MMM dd, hh:mm tt") ?? "—")</MudTd>
+                    <MudTd>@(context.ArrivalTime?.ToString("MMM dd, hh:mm tt") ?? "—")</MudTd>
+                    <MudTd>@context.LogCount</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" Size="Size.Small"
+                                       Href="@($"/trips/{context.Id}")" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<TripSummary> Trips { get; set; } = new();
+}

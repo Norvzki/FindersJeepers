@@ -43,28 +43,42 @@ public class JeepService : IJeepService
         var drivers = await GetJeepneyDriversAsync(jeepId);
 
         var currentTrip = await _uow.Trips.Get()
-            .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.OnGoing)
+            .Where(t => t.JeepneyId == jeep.Id && (t.Status == TripStatus.OnGoing || t.Status == TripStatus.Waiting))
+            .Join(_uow.Drivers.Get(), t=>t.DriverId, d=>d.Id, (t, d) => new { Trip = t, Driver = d })
             .Select(t => new TripSummary
             {
-                Id = t.Id,
-                ArrivalTime = t.ArrivalTime,
-                DepartureTime = t.DepartureTime,
-                LogCount = t.Logs.Count,
+                Id = t.Trip.Id,
+                ArrivalTime = t.Trip.ArrivalTime,
+                DepartureTime = t.Trip.DepartureTime,
+                LogCount = t.Trip.Logs.Count,
                 RouteCode = route.RouteCode,
-                Status = t.Status.ToString()
+                JeepneyPlateNumber = jeep.PlateNumber,
+                Driver = new DriverSummary
+                {
+                    Id = t.Driver.Id,
+                    Name = t.Driver.FirstName + " " + t.Driver.LastName,
+                },
+                Status = t.Trip.Status.ToString()
             })
             .FirstOrDefaultAsync();
 
         var pastTrips = await _uow.Trips.Get()
             .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.Completed)
+            .Join(_uow.Drivers.Get(), t => t.DriverId, d => d.Id, (t, d) => new { Trip = t, Driver = d })
             .Select(t => new TripSummary
             {
-                Id = t.Id,
-                ArrivalTime = t.ArrivalTime,
-                DepartureTime = t.DepartureTime,
-                LogCount = t.Logs.Count,
+                Id = t.Trip.Id,
+                ArrivalTime = t.Trip.ArrivalTime,
+                DepartureTime = t.Trip.DepartureTime,
+                LogCount = t.Trip.Logs.Count,
                 RouteCode = route.RouteCode,
-                Status = t.Status.ToString()
+                JeepneyPlateNumber = jeep.PlateNumber,
+                Driver = new DriverSummary
+                {
+                    Id = t.Driver.Id,
+                    Name = t.Driver.FirstName + " " + t.Driver.LastName,
+                },
+                Status = t.Trip.Status.ToString()
             })
             .ToListAsync();
 
@@ -78,7 +92,7 @@ public class JeepService : IJeepService
             CurrentStatus = currentTrip != null ? "OnGoing" : "Waiting",
             CurrentTrip = currentTrip,
             AssignedDrivers = drivers,
-            PastTrips = pastTrips
+            PastTrips = pastTrips,
         };
     }
     public Task UpdateAsync(UpdateJeepneyRequest request)
@@ -127,18 +141,34 @@ public class JeepService : IJeepService
         var activeDriverIds = activeJeepDrivers
             .Select(j => j.DriverId)
             .ToList();
+
         var drivers = await _uow.Drivers.Get()
             .Where(d => activeDriverIds.Contains(d.Id))
             .ToListAsync();
+
+        var driverCurrentPlates = await (
+            from t in _uow.Trips.Get()
+            join j in _uow.Jeepneys.Get() on t.JeepneyId equals j.Id
+            where activeDriverIds.Contains(t.DriverId) && t.ArrivalTime == null
+            select new
+            {
+                t.DriverId,
+                j.PlateNumber
+            }
+        ).ToListAsync();
+
         return (
             from d in drivers
-            join j in activeJeepDrivers on d.Id equals j.DriverId
+            join jd in activeJeepDrivers on d.Id equals jd.DriverId
+            let currentPlate = driverCurrentPlates.FirstOrDefault(p => p.DriverId == d.Id)?.PlateNumber
             select new JeepneyDriverDto
             {
                 Id = d.Id,
                 FirstName = d.FirstName,
                 LastName = d.LastName,
-                AssignedAt = j.AssignedAt
+                AssignedAt = jd.AssignedAt,
+                IsAvailable = string.IsNullOrEmpty(currentPlate),
+                CurrentJeepneyPlateDriving = currentPlate ?? "None"
             }
         ).ToList();
     }

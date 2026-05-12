@@ -1,0 +1,87 @@
+﻿@using MudBlazor
+
+<style> @*css lol ew*@
+    @@keyframes pulse-available {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .status-available {
+        animation: pulse-available 2s ease-in-out infinite;
+    }
+</style>
+
+<MudCard Elevation="2" Style="border-radius:14px;">
+    <MudCardContent Class="d-flex flex-column align-items-center text-center pa-6">
+
+        <MudAvatar Color="Color.Secondary" Style="width:80px;height:80px;" Class="mb-3" Variant="Variant.Filled">
+            <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" Style="font-size:2.2rem;" />
+        </MudAvatar>
+
+        <MudText Typo="Typo.h5" Class="fw-bold">@Jeepney.PlateNumber</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">Body #@Jeepney.BodyNumber</MudText>
+
+        <MudChip T="string"
+                 Color="@StatusColor"
+                 Variant="Variant.Filled"
+                 Size="Size.Small"
+                 Icon="@StatusIcon"
+                 Class="@($"mb-4 {(Status == "Available" ? "status-available" : "")}")">
+            @Status
+        </MudChip>
+
+        <MudDivider Class="w-100 mb-4" />
+
+        <MudStack Spacing="2" Class="w-100 text-start">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.AirlineSeatReclineNormal" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">Capacity: @Jeepney.Capacity</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">Route: @Jeepney.RouteCode</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">Total Trips: @Jeepney.PastTrips.Count</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Group" Size="Size.Small" Class="mud-text-secondary" />
+                <MudText Typo="Typo.body2">Drivers: @(Jeepney.AssignedDrivers?.Count ?? 0)</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudDivider Class="w-100 my-4" />
+
+        <MudStack Spacing="2" Class="w-100">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(Status == "On a Trip")"
+                       OnClick="OnStartTripClick">
+                Start New Trip
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.Edit"
+                       OnClick="OnEditClick">
+                Edit
+            </MudButton>
+        </MudStack>
+
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired] public JeepneyDetail Jeepney { get; set; } = null!;
+    [Parameter, EditorRequired] public string Status { get; set; } = null!;
+    [Parameter, EditorRequired] public Color StatusColor { get; set; }
+    [Parameter, EditorRequired] public string StatusIcon { get; set; } = null!;
+    [Parameter] public EventCallback OnStartTripClick { get; set; }
+    [Parameter] public EventCallback OnEditClick { get; set; }
+}
