@@ -52,13 +52,13 @@ public class Trip : AggregateRoot
         ArrivalTime = DateTime.UtcNow;
     }
 
-    public void LogStopEvent(int stopId, int passengerCount, int capacity, TripLogType logType)
+    public void LogStopEvent(int locationId, int passengerCount, int capacity, TripLogType logType)
     {
         // i arrive at ayala with N people. When you arrive, CLASSIFY ONLY THOSE WHO GET OFF THE JEEP.
         // i depart from ayala with N people. When departing, CLASSIFY ONLY THOSE WHO HAVE GET ON THE JEEP.
 
         if (Status != TripStatus.OnGoing) throw new DomainException("Trip has not started yet!");
-        var log = TripLog.Create(this.Id, stopId, passengerCount,capacity, logType);
+        var log = TripLog.Create(this.Id, locationId, passengerCount,capacity, logType);
         _logs.Add(log);
         // Event: if this log is Route.LocationStopId then complete this trip.
         // Event: if passengerCount is equal to Jeepney.Capacity, Jeepney.Status will be Status.Full
