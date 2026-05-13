@@ -102,7 +102,7 @@ public class TripService : ITripService
         {
             // If arrived,
             // next event is departure from the same stop.
-            stopId = lastLog.StopId;
+            stopId = lastLog.LocationId;
             nextLogType = TripLogType.Departure;
         }
         else
@@ -110,7 +110,7 @@ public class TripService : ITripService
             // If departed
             // know where we departed and whats the next stop
 
-            if (lastLog.StopId == route.LocationStartId)
+            if (lastLog.LocationId == route.LocationStartId)
             {
                 // if depart is start location
                 // Next arrival is at stop index 0
@@ -125,14 +125,14 @@ public class TripService : ITripService
                 }
                 else
                 {
-                    stopId = firstStop.Id;
+                    stopId = firstStop.LocationId;
                     nextLogType = TripLogType.Arrival;
                 }
             }
             else
             {
                 // find next stop after departure
-                var currentStop = directedStops.FirstOrDefault(s => s.Id == lastLog.StopId);
+                var currentStop = directedStops.FirstOrDefault(s => s.LocationId == lastLog.LocationId);
                 var nextStop = directedStops.FirstOrDefault(s => s.StopIndex == currentStop.StopIndex + 1);
 
                 if (nextStop == null)
@@ -144,7 +144,7 @@ public class TripService : ITripService
                 }
                 else
                 {
-                    stopId = nextStop.Id;
+                    stopId = nextStop.LocationId;
                     nextLogType = TripLogType.Arrival;
                 }
             }
@@ -199,8 +199,7 @@ public class TripService : ITripService
                 Status = t.Status.ToString(),
                 Logs = (
                 from tl in t.Logs
-                join rs in r.Stops on tl.StopId equals rs.Id
-                join l in _uow.Locations.Get() on rs.LocationId equals l.Id
+                join l in _uow.Locations.Get() on tl.LocationId equals l.Id
                 select new TripLogDto
                 {
                     EventType = tl.EventType.ToString(),
