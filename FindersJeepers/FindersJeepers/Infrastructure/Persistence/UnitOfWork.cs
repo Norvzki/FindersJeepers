@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
 
+/// <summary>
+/// Implementation of the UnitOfWork interface. Please see IUnitOfWork for a more detailed description.
+/// </summary>
 public sealed class UnitOfWork : IUnitOfWork
 {
     private readonly MyDbContext _context;
