@@ -1,0 +1,41 @@
+﻿
+<MudDialog Visible="Visible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add Jeepney</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.PlateNumber" Label="Plate Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_form.BodyNumber" Label="Body Number" Variant="Variant.Outlined" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudNumericField @bind-Value="_form.Capacity" Label="Capacity" Variant="Variant.Outlined" Min="1" Required="true" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudSelect @bind-Value="_form.RouteId" Label="Assign Route" Variant="Variant.Outlined" Required="true">
+                    @foreach (var route in _availableRoutes)
+                    {
+                        <MudSelectItem Value="@route.Id">@route.RouteCode</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="OnCancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnSave">
+            Add Jeepney
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public List<RouteSummary> _availableRoutes { get; set; } = new();
+    [Parameter, EditorRequired] public JeepneyForm _form { get; set; } = null!;
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+}

@@ -1,5 +1,6 @@
 ﻿using MudBlazor;
 using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 public class JeepneyDetailViewModel
 {
@@ -53,6 +54,11 @@ public class JeepneyDetailViewModel
 
     public const int PreviewCount = 3;
 
+    // Edit Driver Dialog
+    public bool EditJeepneyVisible { get; set; }
+    public JeepneyForm Form { get; set; } = new();
+    public List<RouteSummary> _availableRoutes { get; set; } = new();
+
     public JeepneyDetailViewModel(HttpClient http, ISnackbar snackbar)
     {
         _http = http;
@@ -73,6 +79,7 @@ public class JeepneyDetailViewModel
             new("Jeepneys", href: "/jeepneys"),
             new(Jeepney!.PlateNumber, href: null, disabled: true)
         };
+        _availableRoutes = await _http.GetFromJsonAsync<List<RouteSummary>>("/api/v1/routes/");
     }
 
     // ── Start Trip ──
@@ -163,4 +170,44 @@ public class JeepneyDetailViewModel
             _snackbar.Add("Something went wrong...", Severity.Error);
         }
     }
+
+    // Edit Driver Form
+    public void OpenEditJeepneyDialog()
+    {
+        EditJeepneyVisible = true;
+        Form = new JeepneyForm
+        {
+            Id = Jeepney.Id,
+            BodyNumber = Jeepney.BodyNumber,
+            Capacity = Jeepney.Capacity,
+            PlateNumber = Jeepney.PlateNumber,
+            RouteId = _availableRoutes.Where(x => x.RouteCode == Jeepney.RouteCode).Select(x => x.Id).FirstOrDefault()
+        };
+    }
+    public void CloseEditJeepneyDialog() => EditJeepneyVisible = false;
+
+    public async Task OnSaveJeepneyAsync()
+    {
+        var payload = new UpdateJeepneyRequest
+        {
+            Id = Form.Id,
+            BodyNumber = Form.BodyNumber,
+            Capacity = Form.Capacity,
+            PlateNumber = Form.PlateNumber,
+            RouteId = Form.RouteId
+        };
+
+        var response = await _http.PutAsJsonAsync($"/api/v1/jeepneys/{JeepneyId}", payload);
+
+        if(response.IsSuccessStatusCode)
+        {
+            _snackbar.Add("Successfully updated Jeepney!");
+            CloseEditJeepneyDialog();
+            await LoadDataAsync();
+        } else
+        {
+            _snackbar.Add("Something went wrong.");
+        }
+    }
+
 }

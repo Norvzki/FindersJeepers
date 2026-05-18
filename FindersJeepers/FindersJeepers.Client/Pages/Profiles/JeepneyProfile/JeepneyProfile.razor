@@ -20,7 +20,7 @@ else
                                 StatusColor="_vm.JeepneyStatusColor"
                                 StatusIcon="_vm.JeepneyStatusIcon"
                                 OnStartTripClick="_vm.OpenStartTripDialog"
-                                OnEditClick="() => { }" />
+                                OnEditClick="_vm.OpenEditJeepneyDialog" />
         </MudItem>
 
         <MudItem xs="12" md="8">
@@ -63,6 +63,12 @@ else
                                 OnToggleDriver="id => _vm.ToggleDriver(id)"
                                 OnCancel="_vm.CloseAssignDriversDialog"
                                 OnConfirm="async () => await _vm.ConfirmAssignDriversAsync()" />
+
+    <EditJeepneyDialog _form="_vm.Form"
+                        OnCancel="_vm.CloseEditJeepneyDialog"
+                        OnSave="_vm.OnSaveJeepneyAsync"
+                        _availableRoutes="_vm._availableRoutes"
+                        Visible = "_vm.EditJeepneyVisible"/>
 }
 
 @code {
