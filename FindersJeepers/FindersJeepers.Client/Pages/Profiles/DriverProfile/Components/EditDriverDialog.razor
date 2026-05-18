@@ -32,7 +32,7 @@
 
 @code {
     [Parameter] public bool Visible { get; set; }
-    [Parameter, EditorRequired] public DriverDetailViewModel.DriverForm Form { get; set; } = null!;
+    [Parameter, EditorRequired] public DriverForm Form { get; set; } = null!;
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
 
