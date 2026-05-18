@@ -212,14 +212,7 @@ else
         // Replace with confirm dialog + await JeepneyService.DeleteAsync(jeepney.Id);
     }
 
-    public class JeepneyForm
-    {
-        public int Id { get; set; }
-        public string PlateNumber { get; set; } = string.Empty;
-        public string BodyNumber { get; set; } = string.Empty;
-        public int Capacity { get; set; }
-        public int RouteId { get; set; }
-    }
+
 
     public class RouteOption { public int Id { get; set; } public string RouteCode { get; set; } = string.Empty; }
 }
