@@ -1,7 +1,6 @@
 ﻿@page "/locations/{Id:int}"
-@using FindersJeepers.Client.Pages.Profiles.LocationProfile.Components
-@using MudBlazor
 @inject LocationDetailViewModel ViewModel
+@using FindersJeepers.Client.Pages.Profiles.LocationProfile.Components
 @inject IDialogService DialogService
 
 @if (ViewModel.IsLoading)
