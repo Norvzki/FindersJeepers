@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using MudBlazor
+@inject HttpClient Http
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -111,6 +112,7 @@
 </MudContainer>
 
 @code {
+    private DashboardSummaryDto _summary = new();
     private int _jeepneyCount;
     private int _driverCount;
     private int _locationCount;
@@ -120,13 +122,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("OnInitializedAsync started");
+        await LoadDashboard();
         // Temporary demo data — replace with your service calls
         await Task.Delay(300);
 
-        _jeepneyCount = 12;
-        _driverCount = 8;
-        _locationCount = 5;
-        _routeCount = 6;
+        _jeepneyCount = _summary.TotalJeepneys;
+        _driverCount = _summary.TotalDrivers;
+        _locationCount = _summary.TotalLocations;
+        _routeCount = _summary.TotalRoutes;
 
         _recentActivity = new List<string>
         {
@@ -136,7 +140,18 @@
             "New location added: Carbon Terminal."
         };
     }
-
+    private async Task LoadDashboard()
+    {
+        try
+        {
+            _summary = await Http.GetFromJsonAsync<DashboardSummaryDto>("api/v1/dashboard/summary");
+            Console.WriteLine($"API Response: TotalJeepneys = {_summary.TotalJeepneys}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+    }
     private void NavigateTo(string path)
     {
         // Simple navigation helper — adjust routes to match your app

@@ -9,6 +9,7 @@ public static class DependencyInjection
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IRouteService, RouteService>();
         services.AddScoped<IOptionService, OptionService>();
+        services.AddScoped<IDashboardService, DashboardService>(); // Crazy stuff -norbel
 
         return services;
     }
