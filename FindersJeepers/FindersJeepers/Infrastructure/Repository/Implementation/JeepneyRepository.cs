@@ -17,7 +17,9 @@ public class JeepneyRepository : Repository<Jeepney>, IJeepneyRepository
             .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))
             .ToListAsync();
 
-    public override IQueryable<Jeepney> Get() => _context.Jeepneys.Where(x => x.IsDeleted == false).AsQueryable();
+    public async Task<List<Jeepney>> GetByRouteAsync(int routeId) => await _context.Jeepneys.Where(x=>x.RouteId  == routeId).ToListAsync();
+
+    public override IQueryable<Jeepney> Get(FetchOptions? options = null) => _context.Jeepneys.Where(x => x.IsDeleted == false).AsQueryable();
 
 
     //public async Task<List<Jeepney>> GetStandbyJeepsOfDriver(int driverId)

@@ -4,5 +4,5 @@ public class LocationRepository : Repository<Location>, ILocationRepository
     {
     }
 
-    public override IQueryable<Location> Get() => _context.Locations.Where(x => x.IsDeleted == false).AsQueryable();
+    public override IQueryable<Location> Get(FetchOptions? options = null) => _context.Locations.Where(x => x.IsDeleted == false).AsQueryable();
 }

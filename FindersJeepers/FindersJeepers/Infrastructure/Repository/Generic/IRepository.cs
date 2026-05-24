@@ -36,6 +36,7 @@ public interface IRepository<T> where T : class
     /// It returns an IQueryable, which means that we still have to specify a query to actually fetch the records that we want.
     /// Querying is usually done via LINQ or foreach, whichever is more comfortable. You can use foreach if you don't know LINQ yet.
     /// </summary>
+    /// <param name="options">Do we include deleted entities or not?</param>
     /// <returns></returns>
-    IQueryable<T> Get();
+    IQueryable<T> Get(FetchOptions? options = null);
 }
