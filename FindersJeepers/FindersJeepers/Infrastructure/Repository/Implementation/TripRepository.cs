@@ -23,5 +23,10 @@ public class TripRepository : Repository<Trip>, ITripRepository
     public async Task<List<Trip>> GetActiveTripsOnRouteAsync(int routeId) => await _context.Trips
         .Where(x=>x.RouteId == routeId && x.Status != TripStatus.Completed).ToListAsync();
 
-    public override IQueryable<Trip> Get(FetchOptions? options = null) => _context.Trips.Where(x => x.IsDeleted == false).AsQueryable();
+    public override IQueryable<Trip> Get(FetchOptions? options = null)
+    {
+        if (options == FetchOptions.IncludeDeleted)
+            return _context.Trips.AsQueryable();
+        return _context.Trips.Where(x => x.IsDeleted == false).AsQueryable();
+    }
 }

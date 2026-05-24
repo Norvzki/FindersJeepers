@@ -8,7 +8,13 @@ public class DriverRepository : Repository<Driver>, IDriverRepository
     {
     }
 
-    public override IQueryable<Driver> Get(FetchOptions? options = null) => _context.Drivers.Where(x => x.IsDeleted == false).AsQueryable();
+    public override IQueryable<Driver> Get(FetchOptions? options = null)
+    {
+            if (options == FetchOptions.IncludeDeleted)
+                return _context.Drivers.AsQueryable();
+
+            return _context.Drivers.Where(x=>x.IsDeleted == false).AsQueryable();
+    }
 
     //public async Task<List<Driver>> GetByActiveJeepneyAsync(int jeepneyId)
     //  => await _set.Where(driver => _context.Jeepneys
