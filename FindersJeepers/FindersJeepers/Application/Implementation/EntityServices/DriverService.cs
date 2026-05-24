@@ -86,7 +86,7 @@ public class DriverService : IDriverService
         var driver = await _uow.Drivers.GetByIdAsync(driverId);
         if (driver == null) throw new InvalidIdException("Invalid driver ID!");
 
-        var jeepneyData = await _uow.Jeepneys.Get()
+        var jeepneyData = await _uow.Jeepneys.Get(FetchOptions.IncludeDeleted)
             .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))
             .Join(_uow.Routes.Get(),
                 j => j.RouteId,
@@ -127,7 +127,7 @@ public class DriverService : IDriverService
 
         var trips = await _uow.Trips.Get()
             .Where(t=>t.DriverId == driverId)
-            .Join(_uow.Jeepneys.Get(), t=>t.JeepneyId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
+            .Join(_uow.Jeepneys.Get(FetchOptions.IncludeDeleted), t=>t.JeepneyId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
             .Select(t => new TripSummary
             {
                 Id = t.Trip.Id,
@@ -139,9 +139,6 @@ public class DriverService : IDriverService
                 JeepneyPlateNumber = t.Jeepney.PlateNumber
             })
             .ToListAsync();
-
-        
-
 
         return new DriverDetail
         {

@@ -42,45 +42,49 @@ public class JeepService : IJeepService
 
         var drivers = await GetJeepneyDriversAsync(jeepId);
 
-        var currentTrip = await _uow.Trips.Get()
-            .Where(t => t.JeepneyId == jeep.Id && (t.Status == TripStatus.OnGoing || t.Status == TripStatus.Waiting))
-            .Join(_uow.Drivers.Get(), t=>t.DriverId, d=>d.Id, (t, d) => new { Trip = t, Driver = d })
-            .Select(t => new TripSummary
+        var currentTrip = await (
+            from t in _uow.Trips.Get()
+            where t.JeepneyId == jeep.Id && (t.Status == TripStatus.OnGoing || t.Status == TripStatus.Waiting)
+            join d in _uow.Drivers.Get(FetchOptions.IncludeDeleted) on t.DriverId equals d.Id
+            join r in _uow.Routes.Get(FetchOptions.IncludeDeleted) on t.RouteId equals r.Id
+            select new TripSummary
             {
-                Id = t.Trip.Id,
-                ArrivalTime = t.Trip.ArrivalTime,
-                DepartureTime = t.Trip.DepartureTime,
-                LogCount = t.Trip.Logs.Count,
-                RouteCode = route.RouteCode,
+                Id = t.Id,
+                ArrivalTime = t.ArrivalTime,
+                DepartureTime = t.DepartureTime,
+                LogCount = t.Logs.Count,
+                RouteCode = r.RouteCode, // Fixed the missing assignment from your original snippet
                 JeepneyPlateNumber = jeep.PlateNumber,
                 Driver = new DriverSummary
                 {
-                    Id = t.Driver.Id,
-                    Name = t.Driver.FirstName + " " + t.Driver.LastName,
+                    Id = d.Id,
+                    Name = d.FirstName + " " + d.LastName,
                 },
-                Status = t.Trip.Status.ToString()
-            })
-            .FirstOrDefaultAsync();
+                Status = t.Status.ToString()
+            }
+        ).FirstOrDefaultAsync();
 
-        var pastTrips = await _uow.Trips.Get()
-            .Where(t => t.JeepneyId == jeep.Id && t.Status == TripStatus.Completed)
-            .Join(_uow.Drivers.Get(), t => t.DriverId, d => d.Id, (t, d) => new { Trip = t, Driver = d })
-            .Select(t => new TripSummary
+        var pastTrips = await (
+            from t in _uow.Trips.Get()
+            where t.JeepneyId == jeep.Id && t.Status == TripStatus.Completed
+            join d in _uow.Drivers.Get() on t.DriverId equals d.Id
+            join r in _uow.Routes.Get(FetchOptions.IncludeDeleted) on t.RouteId equals r.Id
+            select new TripSummary
             {
-                Id = t.Trip.Id,
-                ArrivalTime = t.Trip.ArrivalTime,
-                DepartureTime = t.Trip.DepartureTime,
-                LogCount = t.Trip.Logs.Count,
-                RouteCode = route.RouteCode,
+                Id = t.Id,
+                ArrivalTime = t.ArrivalTime,
+                DepartureTime = t.DepartureTime,
+                LogCount = t.Logs.Count,
+                RouteCode = r.RouteCode,
                 JeepneyPlateNumber = jeep.PlateNumber,
                 Driver = new DriverSummary
                 {
-                    Id = t.Driver.Id,
-                    Name = t.Driver.FirstName + " " + t.Driver.LastName,
+                    Id = d.Id,
+                    Name = d.FirstName + " " + d.LastName,
                 },
-                Status = t.Trip.Status.ToString()
-            })
-            .ToListAsync();
+                Status = t.Status.ToString()
+            }
+        ).ToListAsync();
 
         return new JeepneyDetail
         {
@@ -103,9 +107,10 @@ public class JeepService : IJeepService
         if (currentTrip != null)
             throw new ApplicationException("A jeep cannot be updated if its currently on a trip!");
 
-        jeepney.UpdateInformation(request.PlateNumber, request.BodyNumber, request.Capacity, request.RouteId);
-        _uow.Jeepneys.Update(jeepney);
-        await _uow.SaveChangesAsync();
+
+            jeepney.UpdateInformation(request.PlateNumber, request.BodyNumber, request.Capacity, request.RouteId);
+            _uow.Jeepneys.Update(jeepney);
+            await _uow.SaveChangesAsync();
     }
     public async Task DeleteAsync(int jeepId)
     {

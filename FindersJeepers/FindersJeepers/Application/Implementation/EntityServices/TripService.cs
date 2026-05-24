@@ -166,7 +166,7 @@ public class TripService : ITripService
         return await (
             from t in _uow.Trips.Get()
             join j in _uow.Jeepneys.Get() on t.JeepneyId equals j.Id
-            join r in _uow.Routes.Get() on j.RouteId equals r.Id
+            join r in _uow.Routes.Get() on t.RouteId equals r.Id
             select new TripDto
             {
                 PlateNumber = j.PlateNumber,
@@ -185,7 +185,7 @@ public class TripService : ITripService
             from t in _uow.Trips.Get()
             where t.Id == tripId
             join j in _uow.Jeepneys.Get() on t.JeepneyId equals j.Id
-            join r in _uow.Routes.Get() on j.RouteId equals r.Id
+            join r in _uow.Routes.Get() on t.RouteId equals r.Id
             select new TripDetailDto
             {
                 ArrivalTime = t.ArrivalTime,
