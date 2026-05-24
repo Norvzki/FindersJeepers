@@ -25,11 +25,8 @@ public class LocationService : ILocationService
 
         var routesWithLocation = await _uow.Routes.GetByLocationAsync(locationId);
 
-        foreach (var route in routesWithLocation)
-        {
-            if ((await _uow.Trips.GetActiveTripsOnRouteAsync(route.Id)).Any())
-                throw new ApplicationException("You cannot delete a location being used by a route used by an active trip!");
-        }
+        if (routesWithLocation != null)
+            throw new ApplicationException("You cannot delete a location that is used by routes!");
 
         location.Delete();
         _uow.Locations.Update(location);

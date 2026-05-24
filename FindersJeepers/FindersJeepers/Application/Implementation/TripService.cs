@@ -199,7 +199,7 @@ public class TripService : ITripService
                 Status = t.Status.ToString(),
                 Logs = (
                 from tl in t.Logs
-                join l in _uow.Locations.Get() on tl.LocationId equals l.Id
+                join l in _uow.Locations.Get(null) on tl.LocationId equals l.Id
                 select new TripLogDto
                 {
                     EventType = tl.EventType.ToString(),

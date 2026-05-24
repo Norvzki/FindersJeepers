@@ -28,7 +28,7 @@ public class RouteService : IRouteService
             LocationStart = ls.Name,
             LocationEnd = le.Name,
             Stops = (from rs in r.Stops
-                     join l in _uow.Locations.Get() on rs.LocationId equals l.Id
+                     join l in _uow.Locations.Get(null) on rs.LocationId equals l.Id
                     select new RouteStopDto
                     {
                         LocationId = rs.LocationId,
@@ -114,10 +114,10 @@ public class RouteService : IRouteService
     public async Task DeleteAsync(int routeId)
     {
         var route = await _uow.Routes.GetByIdAsync(routeId);
-        var currentTrip = await _uow.Trips.GetActiveTripsOnRouteAsync(routeId);
+        var jeepsUsingRoute = await _uow.Jeepneys.GetByRouteAsync(routeId);
 
-        if (currentTrip.Any())
-            throw new ApplicationException("You cannot delete a route that is being used by a jeepney on a trip!");
+        if (jeepsUsingRoute.Any())
+            throw new ApplicationException("You cannot delete a route that is being used by a jeepney!");
 
         route.Delete();
         _uow.Routes.Update(route);

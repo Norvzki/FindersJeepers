@@ -28,7 +28,7 @@ public class JeepService : IJeepService
                 Capacity = j.Capacity,
                 RouteCode = r.RouteCode,
                 DriverCount = j.Drivers.Count(j0 => j0.UnassignedAt == null),
-                TripCount = _uow.Trips.Get().Count(t => t.JeepneyId == j.Id)
+                TripCount = _uow.Trips.Get(null).Count(t => t.JeepneyId == j.Id)
             }
         )
         .ToListAsync();
@@ -190,6 +190,12 @@ public class JeepService : IJeepService
     public async Task RemoveDriverAsync(int driverId, int jeepneyId)
     {
         var jeep = await _uow.Jeepneys.GetByIdAsync(jeepneyId);
+
+        var currentTripByJeepney = await _uow.Trips.GetCurrentTripByJeepneyAsync(jeepneyId);
+
+        if (currentTripByJeepney != null && currentTripByJeepney.DriverId == driverId)
+            throw new ApplicationException("You cant really do that while he's currently driving the jeep now, can you?");
+
         jeep.RemoveDriver(driverId);
         _uow.Jeepneys.Update(jeep);
         await _uow.SaveChangesAsync();
