@@ -3,6 +3,102 @@
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 
+<style>
+    .passenger-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 5px;
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(128, 128, 128, 0.06);
+        user-select: none;
+        cursor: pointer;
+    }
+
+    .p-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        transition: transform 0.08s ease, background 0.1s ease, color 0.1s ease;
+        color: var(--mud-palette-text-disabled);
+        position: relative;
+    }
+
+    .p-icon:hover {
+        transform: scale(1.12);
+    }
+
+    .p-icon.selected {
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.14);
+        animation: pax-glow 2s ease-in-out infinite alternate;
+    }
+
+    .p-icon.preview:not(.selected) {
+        color: #fbbf24;
+        background: rgba(245, 158, 11, 0.07);
+    }
+
+    .p-icon.overload {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.14);
+        animation: pax-glow-red 2s ease-in-out infinite alternate;
+    }
+
+    @@keyframes pax-glow {
+        from { box-shadow: 0 0 0px rgba(245, 158, 11, 0.0); }
+        to   { box-shadow: 0 0 8px rgba(245, 158, 11, 0.55); }
+    }
+
+    @@keyframes pax-glow-red {
+        from { box-shadow: 0 0 0px rgba(239, 68, 68, 0.0); }
+        to   { box-shadow: 0 0 8px rgba(239, 68, 68, 0.55); }
+    }
+
+    .pax-count-display {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+
+    .pax-count-overload {
+        color: #ef4444;
+    }
+
+    .pax-count-warn {
+        color: #f59e0b;
+    }
+
+    .pax-count-ok {
+        color: var(--mud-palette-success);
+    }
+
+    .custom-toggle-btn {
+        border: 1.5px dashed var(--mud-palette-divider) !important;
+        border-radius: 8px !important;
+        padding: 6px 14px !important;
+        font-size: 0.78rem !important;
+        color: var(--mud-palette-text-secondary) !important;
+        background: transparent !important;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .custom-toggle-btn:hover {
+        border-color: var(--mud-palette-primary) !important;
+        color: var(--mud-palette-primary) !important;
+    }
+
+    .custom-toggle-btn.active {
+        border-color: var(--mud-palette-error) !important;
+        color: var(--mud-palette-error) !important;
+    }
+</style>
+
 @if (_trip is null)
 {
     <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
@@ -115,7 +211,6 @@ else
                         </MudCardHeader>
                         <MudDivider />
                         <MudCardContent>
-                            @* Simple visual bar representation — replace with a real chart library if available *@
                             <MudStack Spacing="1">
                                 @foreach (var log in _trip.Logs.OrderBy(l => l.Timestamp))
                                 {
@@ -189,36 +284,113 @@ else
     </MudGrid>
 }
 
-@* Log Stop Event Dialog *@
+@* ── Log Stop Event Dialog ── *@
 <MudDialog Visible="_logDialogVisible" Options="_dialogOptions">
     <TitleContent>
-        <MudText Typo="Typo.h6">Log Stop Event</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.ListAlt" Size="Size.Small" />
+            <MudText Typo="Typo.h6">Log Stop Event</MudText>
+        </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudGrid>
-            <MudItem xs="12">
-                <MudSelect @bind-Value="_logForm.StopId" Label="Stop" Variant="Variant.Outlined" Required="true">
-                    @foreach (var stop in _availableStops)
+        <MudStack Spacing="3">
+
+            <MudDivider />
+
+            @* ── Passenger count header ── *@
+            <MudStack Row="true" AlignItems="AlignItems.Baseline" Justify="Justify.SpaceBetween">
+                <MudStack Row="true" AlignItems="AlignItems.Baseline" Spacing="1">
+                    <span class="pax-count-display @PaxCountClass">@_logForm.PassengerCount</span>
+                    <MudText Typo="Typo.body1" Class="mud-text-secondary">/ @(_trip?.Capacity ?? 0) passengers</MudText>
+                </MudStack>
+
+                @if (_logForm.PassengerCount == 0)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Tap a seat to select</MudText>
+                }
+                else if (_logForm.PassengerCount > (_trip?.Capacity ?? 0))
+                {
+                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Filled">
+                        +@(_logForm.PassengerCount - (_trip?.Capacity ?? 0)) over capacity
+                    </MudChip>
+                }
+                else
+                {
+                    var pct = (int)((double)_logForm.PassengerCount / (_trip?.Capacity ?? 1) * 100);
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@pct% full</MudText>
+                }
+            </MudStack>
+
+            @* ── Passenger icon grid ── *@
+            <div class="passenger-grid"
+                 @onmousedown="() => _isDragging = true"
+                 @onmouseup="() => _isDragging = false"
+                 @onmouseleave="() => { _hoverCount = 0; _isDragging = false; }">
+                @for (int i = 1; i <= (_trip?.Capacity ?? 0); i++)
+                {
+                    int idx = i;
+                    bool isSelected = idx <= _logForm.PassengerCount;
+                    bool isPreview  = !isSelected && idx <= _hoverCount;
+
+                    <div class="p-icon @(isSelected ? "selected" : "") @(isPreview ? "preview" : "")"
+                         @onmouseenter="() => OnIconHover(idx)"
+                         @onclick="() => SetPassengerCount(idx)">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    </div>
+                }
+            </div>
+
+            @* ── Overload custom input toggle ── *@
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <button class="custom-toggle-btn @(_showCustomInput ? "active" : "")"
+                        type="button"
+                        @onclick="ToggleCustomInput">
+                    @if (_showCustomInput)
                     {
-                        <MudSelectItem Value="@stop.Id">@stop.Name</MudSelectItem>
+                        <MudIcon Icon="@Icons.Material.Filled.ExpandLess" Size="Size.Small" Style="vertical-align:middle; margin-right:4px;" />
+                        <span>Hide custom count</span>
                     }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12">
-                <MudNumericField @bind-Value="_logForm.PassengerCount" Label="Passenger Count"
-                                 Variant="Variant.Outlined" Min="0" Required="true" />
-            </MudItem>
-            <MudItem xs="12">
-                <MudSelect @bind-Value="_logForm.EventType" Label="Event Type" Variant="Variant.Outlined" Required="true">
-                    <MudSelectItem Value="@("Arrival")">Arrival</MudSelectItem>
-                    <MudSelectItem Value="@("Departure")">Departure</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Style="vertical-align:middle; margin-right:4px;" />
+                        <span>Overloading? Enter custom count</span>
+                    }
+                </button>
+            </MudStack>
+
+            @* ── Custom overload input ── *@
+            @if (_showCustomInput)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-0">
+                    This will exceed the vehicle's listed capacity of @(_trip?.Capacity ?? 0).
+                </MudAlert>
+                <MudNumericField @bind-Value="_logForm.PassengerCount"
+                                 Label="Custom Passenger Count"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.People"
+                                 AdornmentColor="Color.Error"
+                                 Required="true" />
+            }
+
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _logDialogVisible = false">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveLog">Log Event</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="@(_logForm.PassengerCount > (_trip?.Capacity ?? 0) ? Color.Error : Color.Primary)"
+                   OnClick="SaveLog">
+            @if (_logForm.PassengerCount > (_trip?.Capacity ?? 0))
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="mr-1" />
+                <span>Log (Overloaded)</span>
+            }
+            else
+            {
+                <span>Log Event</span>
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -231,7 +403,25 @@ else
     private LogForm _logForm = new();
     private List<StopOption> _availableStops = new();
 
-    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+    // Passenger selector state
+    private int  _hoverCount       = 0;
+    private bool _isDragging        = false;
+    private bool _showCustomInput   = false;
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    private string PaxCountClass => _logForm.PassengerCount > (_trip?.Capacity ?? 0)
+        ? "pax-count-overload"
+        : _logForm.PassengerCount >= (_trip?.Capacity ?? 0) * 0.8
+            ? "pax-count-warn"
+            : "pax-count-ok";
 
     private string TripDuration
     {
@@ -243,6 +433,29 @@ else
             return $"{(int)dur.TotalHours}h {dur.Minutes}m";
         }
     }
+
+    // ── Passenger selector logic ──────────────────────────────────────
+
+    private void OnIconHover(int idx)
+    {
+        _hoverCount = idx;
+        if (_isDragging)
+            _logForm.PassengerCount = idx;
+    }
+
+    private void SetPassengerCount(int count)
+    {
+        // Clicking the same last icon toggles it off (deselect all)
+        _logForm.PassengerCount = _logForm.PassengerCount == count ? 0 : count;
+    }
+
+    private void ToggleCustomInput()
+    {
+        _showCustomInput = !_showCustomInput;
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────
+
     private async Task LoadData()
     {
         _trip = await Http.GetFromJsonAsync<TripDetailDto>($"/api/v1/trips/{Id}");
@@ -250,7 +463,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Replace with: _trip = await TripService.GetProfileAsync(Id);
         await Task.Delay(300);
         await LoadData();
         _availableStops = new List<StopOption>
@@ -263,9 +475,11 @@ else
         _breadcrumbs = new List<BreadcrumbItem>
         {
             new("Trips", href: "/trips"),
-            new($"Trip #{_trip.Id}", href: null, disabled: true)
+            new($"Trip #{_trip?.Id}", href: null, disabled: true)
         };
     }
+
+    // ── Status helpers ────────────────────────────────────────────────
 
     private Color GetStatusColor(string status) => status switch
     {
@@ -283,26 +497,25 @@ else
         _           => Icons.Material.Filled.Circle
     };
 
+    // ── Trip actions ──────────────────────────────────────────────────
+
     private async Task StartTrip()
     {
-        var response = await Http.PutAsJsonAsync($"/api/v1/trips/{Id}/start", new{});
-
-        if(response.IsSuccessStatusCode)
+        var response = await Http.PutAsJsonAsync($"/api/v1/trips/{Id}/start", new { });
+        if (response.IsSuccessStatusCode)
         {
             Snackbar.Add("Trip started!");
             await LoadData();
         }
         else
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            Snackbar.Add(errorMessage);
+            Snackbar.Add(await response.Content.ReadAsStringAsync());
         }
     }
 
     private async Task CompleteTrip()
     {
         var response = await Http.PutAsJsonAsync($"/api/v1/trips/{Id}/complete", new { });
-
         if (response.IsSuccessStatusCode)
         {
             Snackbar.Add("Trip completed!");
@@ -310,24 +523,26 @@ else
         }
         else
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            Snackbar.Add(errorMessage);
+            Snackbar.Add(await response.Content.ReadAsStringAsync());
         }
     }
 
     private void OpenLogDialog()
     {
-        _logForm = new LogForm();
+        _logForm         = new LogForm();
+        _hoverCount      = 0;
+        _isDragging       = false;
+        _showCustomInput  = false;
         _logDialogVisible = true;
     }
 
     private async Task SaveLog()
     {
         var payload = new NextStopRequest
-            {
-                TripId = Id,
-                PassengerCount = _logForm.PassengerCount
-            };
+        {
+            TripId         = Id,
+            PassengerCount = _logForm.PassengerCount
+        };
         var response = await Http.PostAsJsonAsync($"/api/v1/trips/{Id}/next", payload);
         if (response.IsSuccessStatusCode)
         {
@@ -336,18 +551,23 @@ else
         }
         else
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            Snackbar.Add(errorMessage);
+            Snackbar.Add(await response.Content.ReadAsStringAsync());
         }
         _logDialogVisible = false;
     }
 
+    // ── Inner types ───────────────────────────────────────────────────
+
     public class LogForm
     {
-        public int StopId { get; set; }
-        public int PassengerCount { get; set; }
-        public string EventType { get; set; } = string.Empty;
+        public int    StopId         { get; set; }
+        public int    PassengerCount { get; set; }
+        public string EventType      { get; set; } = string.Empty;
     }
 
-    public class StopOption { public int Id { get; set; } public string Name { get; set; } = string.Empty; }
+    public class StopOption
+    {
+        public int    Id   { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 }
