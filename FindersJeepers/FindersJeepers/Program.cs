@@ -34,7 +34,8 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 
 builder.Services.AddControllers();
-
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -52,7 +53,7 @@ else
 
 app.UseHttpsRedirection();
 app.MapControllers();
-
+app.UseExceptionHandler();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
