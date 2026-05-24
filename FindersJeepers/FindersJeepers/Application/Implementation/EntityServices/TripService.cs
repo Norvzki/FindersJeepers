@@ -182,10 +182,10 @@ public class TripService : ITripService
     public async Task<TripDetailDto> GetDetailAsync(int tripId)
     {
         return await (
-            from t in _uow.Trips.Get()
+            from t in _uow.Trips.Get(FetchOptions.IncludeDeleted)
             where t.Id == tripId
-            join j in _uow.Jeepneys.Get() on t.JeepneyId equals j.Id
-            join r in _uow.Routes.Get() on t.RouteId equals r.Id
+            join j in _uow.Jeepneys.Get(FetchOptions.IncludeDeleted) on t.JeepneyId equals j.Id
+            join r in _uow.Routes.Get(FetchOptions.IncludeDeleted) on t.RouteId equals r.Id
             select new TripDetailDto
             {
                 ArrivalTime = t.ArrivalTime,
@@ -199,7 +199,7 @@ public class TripService : ITripService
                 Status = t.Status.ToString(),
                 Logs = (
                 from tl in t.Logs
-                join l in _uow.Locations.Get(null) on tl.LocationId equals l.Id
+                join l in _uow.Locations.Get(FetchOptions.IncludeDeleted) on tl.LocationId equals l.Id
                 select new TripLogDto
                 {
                     EventType = tl.EventType.ToString(),
