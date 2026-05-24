@@ -67,7 +67,7 @@
                        Color="Color.Success"
                        FullWidth="true"
                        StartIcon="@Icons.Material.Filled.PlayArrow"
-                       Disabled="@(Status == "On a Trip")"
+                       Disabled="@(Status != "Available")"
                        OnClick="OnStartTripClick">
                 Start New Trip
             </MudButton>
