@@ -161,9 +161,11 @@ else
         if(response.IsSuccessStatusCode)
         {
             Snackbar.Add("Added location successfully!");
-        } else
+        }
+        else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
 
         await LoadData();

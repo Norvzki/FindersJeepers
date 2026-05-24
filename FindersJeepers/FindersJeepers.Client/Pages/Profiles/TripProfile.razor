@@ -291,9 +291,11 @@ else
         {
             Snackbar.Add("Trip started!");
             await LoadData();
-        } else
+        }
+        else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
     }
 
@@ -308,7 +310,8 @@ else
         }
         else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
     }
 
@@ -333,7 +336,8 @@ else
         }
         else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
         _logDialogVisible = false;
     }

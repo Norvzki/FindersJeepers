@@ -96,7 +96,8 @@ public class DriverDetailViewModel
         }
         else
         {
-            _snackbar.Add("Something went wrong.", Severity.Error);
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
         }
     }
 
@@ -137,7 +138,8 @@ public class DriverDetailViewModel
         }
         else
         {
-            _snackbar.Add("Something went wrong.", Severity.Error);
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
         }
     }
 
@@ -171,7 +173,10 @@ public class DriverDetailViewModel
         if (response.IsSuccessStatusCode)
             _snackbar.Add("Assigned Jeepneys Successfully!", Severity.Success);
         else
-            _snackbar.Add("Something went wrong...", Severity.Error);
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
+        }
 
         await LoadDataAsync();
         AssignJeepneysVisible = false;

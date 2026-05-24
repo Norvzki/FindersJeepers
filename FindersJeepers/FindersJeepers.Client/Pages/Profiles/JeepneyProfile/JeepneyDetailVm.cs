@@ -116,7 +116,8 @@ public class JeepneyDetailViewModel
         }
         else
         {
-            _snackbar.Add("Something went wrong.", Severity.Error);
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
         }
     }
 
@@ -128,9 +129,15 @@ public class JeepneyDetailViewModel
     {
         var response = await _http.DeleteAsync($"/api/v1/jeepneys/{JeepneyId}/drivers/{driver.Id}");
 
-        _snackbar.Add(
-            response.IsSuccessStatusCode ? $"{driver.FirstName} has been removed." : "Something went wrong.",
-            response.IsSuccessStatusCode ? Severity.Info : Severity.Error);
+        if(response.IsSuccessStatusCode)
+        {
+            _snackbar.Add("Removed jeepney drivers!");
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
+        }
 
         await LoadDataAsync();
     }
@@ -167,7 +174,8 @@ public class JeepneyDetailViewModel
         }
         else
         {
-            _snackbar.Add("Something went wrong...", Severity.Error);
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
         }
     }
 
@@ -204,9 +212,11 @@ public class JeepneyDetailViewModel
             _snackbar.Add("Successfully updated Jeepney!");
             CloseEditJeepneyDialog();
             await LoadDataAsync();
-        } else
+        }
+        else
         {
-            _snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            _snackbar.Add(errorMessage);
         }
     }
 

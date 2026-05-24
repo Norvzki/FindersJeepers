@@ -130,7 +130,7 @@ else
         </MudButton>
     </DialogActions>
 </MudDialog>
-@code {
+    @code {
     private string _search = string.Empty;
     private bool _dialogVisible = false;
     private bool _isEditing = false;
@@ -209,14 +209,13 @@ else
 
         var response = await Http.PostAsJsonAsync("/api/v1/drivers/", request);
 
-        Console.WriteLine($"Sending date {_form.DateHired.ToString()}");
-
         if(response.IsSuccessStatusCode)
         {
             Snackbar.Add("Successfully added Driver!");
         } else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
 
         CloseDialog();

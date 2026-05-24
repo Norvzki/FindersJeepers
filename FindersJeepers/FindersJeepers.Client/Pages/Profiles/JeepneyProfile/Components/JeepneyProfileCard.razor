@@ -130,7 +130,8 @@
         }
         else
         {
-            Snackbar.Add("Something went wrong.");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
     }
 }

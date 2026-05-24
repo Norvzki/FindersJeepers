@@ -256,9 +256,11 @@ else
         if(response.IsSuccessStatusCode)
         {
             Snackbar.Add("Added Route successfully!");
-        } else
+        }
+        else
         {
-            Snackbar.Add("Something went wrong...");
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            Snackbar.Add(errorMessage);
         }
         CloseDialog();
     }
