@@ -3,7 +3,7 @@ public class Trip : AggregateRoot
     public int Id { get; private set; } // Pk
     public int DriverId { get; private set; } // Composite Key
     public int JeepneyId { get; private set; } // Composite Key
-    public int RouteId { get; private set; } // We dont really need this, right?
+    public int RouteId { get; private set; } // We dont really need this, right? (We do)
     public RouteDirection Direction { get; private set; }
 
     public DateTime? DepartureTime {  get; private set; }
