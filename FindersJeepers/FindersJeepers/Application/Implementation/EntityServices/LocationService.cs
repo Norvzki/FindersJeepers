@@ -25,7 +25,9 @@ public class LocationService : ILocationService
 
         var routesWithLocation = await _uow.Routes.GetByLocationAsync(locationId);
 
-        if (routesWithLocation != null)
+        routesWithLocation = routesWithLocation.Where(x => !x.IsDeleted).ToList();
+
+        if (routesWithLocation.Any())
             throw new ApplicationException("You cannot delete a location that is used by routes!");
 
         location.Delete();
