@@ -61,6 +61,8 @@ public class DriverService : IDriverService
         if (currentTrip != null)
             throw new ApplicationException("A driver cannot be deleted if they're currently on a trip!");
 
+
+
         driver.Delete();
         _uow.Drivers.Update(driver);
         await _uow.SaveChangesAsync();
@@ -69,7 +71,6 @@ public class DriverService : IDriverService
     public async Task UpdateAsync(UpdateDriverRequest request)
     {
         var driver = await _uow.Drivers.GetByIdAsync(request.Id);
-
         var currentTrip = await _uow.Trips.GetCurrentTripByDriverAsync(request.Id);
         if (currentTrip != null)
             throw new ApplicationException("A driver cannot be updated if they're currently on a trip!");

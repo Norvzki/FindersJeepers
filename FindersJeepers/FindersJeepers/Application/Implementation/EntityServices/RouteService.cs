@@ -97,6 +97,7 @@ public class RouteService : IRouteService
     public async Task AddRouteStopsAsync(AddRouteStopRequest req)
     {
         var route = await _uow.Routes.GetByIdAsync(req.RouteId);
+
         if (req.RouteDirection == RouteDirection.Forward)
                 route.ClearStops();
         else if (req.RouteDirection == RouteDirection.Return)
@@ -104,8 +105,13 @@ public class RouteService : IRouteService
 
             foreach (var stop in req.RouteStops)
             {
+            if (stop.LocationId == route.LocationStartId || stop.LocationId == route.LocationEndId)
+                throw new ApplicationException("You cannot assign a routestop that is already the route's start or end location!");
+
                 route.AddStop(stop.LocationId, stop.Index, req.RouteDirection);
             }
+
+
         _uow.Routes.Update(route);
         await _uow.SaveChangesAsync();
     }
