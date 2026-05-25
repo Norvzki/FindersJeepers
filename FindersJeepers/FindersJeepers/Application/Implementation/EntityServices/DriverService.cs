@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 using System.Data;
+using static MudBlazor.Colors;
 public class DriverService : IDriverService
 {
     private readonly IUnitOfWork _uow;
@@ -13,6 +14,13 @@ public class DriverService : IDriverService
 
     public async Task CreateAsync(CreateDriverRequest req)
     {
+        var driverOfLicenseNumber = await _uow.Drivers.Get()
+            .Where(x => x.LicenseNumber == req.LicenseNumber)
+            .FirstOrDefaultAsync();
+
+        if (driverOfLicenseNumber != null)
+            throw new ApplicationException("That license number is already taken!");
+
         var driver = Driver.Create(req.FirstName, req.LastName, req.LicenseNumber, req.ContactNumber, req.DateHired);
         await _uow.Drivers.AddAsync(driver);
         await _uow.SaveChangesAsync();
@@ -70,7 +78,17 @@ public class DriverService : IDriverService
 
     public async Task UpdateAsync(UpdateDriverRequest request)
     {
+
+
         var driver = await _uow.Drivers.GetByIdAsync(request.Id);
+
+        var driverOfLicenseNumber = await _uow.Drivers.Get()
+       .Where(x => x.LicenseNumber == request.LicenseNumber && driver.Id != x.Id)
+       .FirstOrDefaultAsync();
+
+        if (driverOfLicenseNumber != null)
+            throw new ApplicationException("That license number is already taken!");
+
         var currentTrip = await _uow.Trips.GetCurrentTripByDriverAsync(request.Id);
         if (currentTrip != null)
             throw new ApplicationException("A driver cannot be updated if they're currently on a trip!");
