@@ -77,11 +77,16 @@ public class TripService : ITripService
         var route = await _uow.Routes.GetByIdAsync(trip.RouteId);
         var jeepney = await _uow.Jeepneys.GetByIdAsync(trip.JeepneyId);
 
-        // filter trips by direction
-        var directedStops = route.Stops
-            .Where(s => s.Direction == trip.Direction)
-            .OrderBy(s => s.StopIndex)
-            .ToList();
+        bool isReturn = trip.Direction == RouteDirection.Return;
+
+        // Resolve terminals based on direction
+        int terminalStartId = isReturn ? route.LocationEndId : route.LocationStartId;
+        int terminalEndId = isReturn ? route.LocationStartId : route.LocationEndId;
+
+        // Use the correct directed stops (already ordered by StopIndex, reversed for Return via GenerateReturnStopsFromForward)
+        var directedStops = isReturn
+            ? route.ReturnStops.ToList()
+            : route.ForwardStops.ToList();
 
         var lastLog = trip.Logs
             .OrderByDescending(x => x.TimeStamp)
@@ -93,33 +98,23 @@ public class TripService : ITripService
 
         if (lastLog == null)
         {
-            // If no logs,
-            // first event is always departure from the route's start location.
-            stopId = route.LocationStartId;
+            stopId = terminalStartId;
             nextLogType = TripLogType.Departure;
         }
         else if (lastLog.EventType == TripLogType.Arrival)
         {
-            // If arrived,
-            // next event is departure from the same stop.
             stopId = lastLog.LocationId;
             nextLogType = TripLogType.Departure;
         }
         else
         {
-            // If departed
-            // know where we departed and whats the next stop
-
-            if (lastLog.LocationId == route.LocationStartId)
+            if (lastLog.LocationId == terminalStartId)
             {
-                // if depart is start location
-                // Next arrival is at stop index 0
                 var firstStop = directedStops.FirstOrDefault();
 
                 if (firstStop == null)
                 {
-                    // if no stops, go to end location.
-                    stopId = route.LocationEndId;
+                    stopId = terminalEndId;
                     nextLogType = TripLogType.Arrival;
                     isTerminal = true;
                 }
@@ -131,14 +126,12 @@ public class TripService : ITripService
             }
             else
             {
-                // find next stop after departure
                 var currentStop = directedStops.FirstOrDefault(s => s.LocationId == lastLog.LocationId);
                 var nextStop = directedStops.FirstOrDefault(s => s.StopIndex == currentStop.StopIndex + 1);
 
                 if (nextStop == null)
                 {
-                    // if no more stops, next one is arrival at the locationEndId
-                    stopId = route.LocationEndId;
+                    stopId = terminalEndId;
                     nextLogType = TripLogType.Arrival;
                     isTerminal = true;
                 }
@@ -150,10 +143,8 @@ public class TripService : ITripService
             }
         }
 
-        // persist
         trip.LogStopEvent(stopId, req.PassengerCount, jeepney.Capacity, nextLogType);
 
-        // auto complete trip.
         if (isTerminal && nextLogType == TripLogType.Arrival)
             trip.CompleteTrip();
 
@@ -174,11 +165,12 @@ public class TripService : ITripService
                 DepartureTime = t.DepartureTime,
                 Id = t.Id,
                 LogCount = t.Logs.Count,
-                RouteCode = r.RouteCode,
+                RouteCode = $"{r.RouteCode} ({t.Direction.ToString()})",
                 Status = t.Status.ToString()
             }
             ).ToListAsync();
     }
+
     public async Task<TripDetailDto> GetDetailAsync(int tripId)
     {
         return await (
@@ -194,7 +186,7 @@ public class TripService : ITripService
                 Id = t.Id,
                 JeepneyId = j.Id,
                 PlateNumber = j.PlateNumber,
-                RouteCode = r.RouteCode,
+                RouteCode = $"{r.RouteCode} ({t.Direction.ToString()})",
                 RouteId = r.Id,
                 Status = t.Status.ToString(),
                 Logs = (
