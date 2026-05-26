@@ -1,13 +1,37 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+﻿<div class="drawer-content">
+    <MudNavMenu>
+        <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
 
-    <MudNavLink Href="drivers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Drivers</MudNavLink>
+        <MudNavLink Href="drivers" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Drivers</MudNavLink>
 
-    <MudNavLink Href="jeepneys" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.DirectionsBus">Jeepneys</MudNavLink>
+        <MudNavLink Href="jeepneys" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.DirectionsBus">Jeepneys</MudNavLink>
 
-    <MudNavLink Href="routes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AltRoute">Routes</MudNavLink>
+        <MudNavLink Href="routes" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AltRoute">Routes</MudNavLink>
 
-    <MudNavLink Href="trips" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Map">Trips</MudNavLink>
+        <MudNavLink Href="trips" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Map">Trips</MudNavLink>
 
-    <MudNavLink Href="locations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">Locations</MudNavLink>
-</MudNavMenu>
+        <MudNavLink Href="locations" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">Locations</MudNavLink>
+    </MudNavMenu>
+
+    <div class="logo-bottom">
+        <MudImage Src="Images/LogoIconText.png"
+                  Alt="FindersJeepers"
+                  Height="150"
+                  Class="rounded-lg" />
+    </div>
+</div>
+
+<style>
+    .drawer-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .logo-bottom {
+        margin-top: auto;
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+    }
+</style>

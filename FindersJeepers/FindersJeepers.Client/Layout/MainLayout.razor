@@ -8,7 +8,7 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <MudImage Fluid="true" Src="Images/LogoText.png" Alt="Logo" Class="rounded-lg" Style="height:50px; width:auto;" />
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
@@ -181,7 +181,7 @@
     private readonly PaletteLight _CloudPalette = new()
     {
                 // ── Primary: deep navy ──
-        Primary = "#1B2A4A",
+        Primary = "#7e6fff",
         PrimaryDarken = "#111D33",
         PrimaryLighten = "#2E4270",
         PrimaryContrastText = "#FFFFFF",
@@ -342,7 +342,7 @@
 
     public string DarkLightModeButtonIcon => _isDarkMode switch
     {
-        true => Icons.Material.Rounded.AutoMode,
+        true => Icons.Material.Outlined.LightMode,
         false => Icons.Material.Outlined.DarkMode,
     };
 }
