@@ -141,14 +141,32 @@ public class RouteService : IRouteService
     public async Task DeleteAsync(int routeId)
     {
         var route = await _uow.Routes.GetByIdAsync(routeId);
+        if (route == null || route.IsDeleted) throw new InvalidIdException("Invalid route ID!");
+
+        var tripsUsingRoute = await _uow.Trips.GetActiveTripsOnRouteAsync(routeId);
+
+        if (tripsUsingRoute.Any())
+            throw new ApplicationException("You cannot delete a route that's currently being used in a trip!");
+
         var jeepsUsingRoute = await _uow.Jeepneys.GetByRouteAsync(routeId);
+        await _uow.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
 
-        if (jeepsUsingRoute.Any())
-            throw new ApplicationException("You cannot delete a route that is being used by a jeepney!");
-
-        route.Delete();
-        _uow.Routes.Update(route);
-        await _uow.SaveChangesAsync();
+        try
+        {
+            foreach(var jeep in jeepsUsingRoute)
+            {
+                jeep.ClearRoute();
+                _uow.Jeepneys.Update(jeep);
+            }
+            route.Delete();
+            _uow.Routes.Update(route);
+            await _uow.SaveChangesAsync();
+            await _uow.CommitAsync();
+        } catch
+        {
+            await _uow.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateRouteRequest req)
