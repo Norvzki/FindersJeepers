@@ -23,4 +23,9 @@ public class RouteRepository : Repository<Route>, IRouteRepository
                         r.LocationEndId == locationId ||
                         r.Stops.Any(s => s.LocationId == locationId))
             .ToListAsync();
+
+    public async Task<Route?> GetByRouteCodeAsync(string routecode)
+        => await _context.Routes
+        .Where(r => r.RouteCode == routecode && r.IsDeleted == false)
+        .FirstOrDefaultAsync();
 }

@@ -2,16 +2,17 @@
 @using MudBlazor
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject NavigationManager Nav
 
 <style>
     .timeline-wrapper {
         transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
-    .timeline-wrapper.fading {
-        opacity: 0;
-        transform: translateX(10px);
-    }
+        .timeline-wrapper.fading {
+            opacity: 0;
+            transform: translateX(10px);
+        }
 </style>
 
 @if (_route is null)
@@ -20,13 +21,11 @@
 }
 else
 {
-    
-        var accent      = _showReturn ? Color.Warning  : Color.Primary;
-        var accentCss   = _showReturn ? "var(--mud-palette-warning)" : "var(--mud-palette-primary)";
-        var originLabel = _showReturn ? _route.LocationEnd   : _route.LocationStart;
-        var destLabel   = _showReturn ? _route.LocationStart : _route.LocationEnd;
-        var activeStops = _showReturn ? _route.ReturnStops   : _route.Stops;
-    
+    var accent = _showReturn ? Color.Warning : Color.Primary;
+    var accentCss = _showReturn ? "var(--mud-palette-warning)" : "var(--mud-palette-primary)";
+    var originLabel = _showReturn ? _route.LocationEnd : _route.LocationStart;
+    var destLabel = _showReturn ? _route.LocationStart : _route.LocationEnd;
+    var activeStops = _showReturn ? _route.ReturnStops : _route.Stops;
 
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 px-0" />
 
@@ -48,28 +47,8 @@ else
                         <MudText Typo="Typo.h5" Class="fw-bold mb-1">@_route.RouteCode</MudText>
 
                         <MudText Typo="Typo.body2" Class="mud-text-secondary mb-3">
-                            @originLabel → @destLabel
+                            @originLabel.Name → @destLabel.Name
                         </MudText>
-                      @*   <MudPaper Elevation="0"
-                                  Style="@($"border-radius:999px; padding:4px; background-color:{(_showReturn ? "var(--mud-palette-warning-lighten)" : "var(--mud-palette-primary-lighten)")}; transition:background-color 0.35s ease; border:1px solid {accentCss};")"
-                                  Class="d-flex align-items-center">
-                            <MudButton Variant="@(!_showReturn ? Variant.Filled : Variant.Text)"
-                                       Color="@(!_showReturn ? Color.Primary : Color.Default)"
-                                       Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.ArrowForward"
-                                       Style="border-radius:999px; min-width:100px;"
-                                       OnClick="() => SetDirection(false)">
-                                Forward
-                            </MudButton>
-                            <MudButton Variant="@(_showReturn ? Variant.Filled : Variant.Text)"
-                                       Color="@(_showReturn ? Color.Warning : Color.Default)"
-                                       Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.ArrowBack"
-                                       Style="border-radius:999px; min-width:100px;"
-                                       OnClick="() => SetDirection(true)">
-                                Return
-                            </MudButton>
-                        </MudPaper> *@
 
                         <MudDivider Class="w-100 my-4" />
 
@@ -89,6 +68,27 @@ else
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary">Jeepneys</MudText>
                             </MudStack>
                         </MudStack>
+
+                        <MudDivider Class="w-100 my-4" />
+
+                        @* ── Edit / Delete ── *@
+                        <MudButtonGroup Variant="Variant.Outlined" Class="w-100">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       OnClick="OpenEditDialog">
+                                Edit
+                            </MudButton>
+                            <MudMenu Icon="@Icons.Material.Filled.ArrowDropDown">
+                                <MudMenuItem OnClick="OpenDeleteConfirmation"
+                                             Icon="@Icons.Material.Filled.DeleteOutline"
+                                             IconColor="Color.Error">
+                                    Delete Route
+                                </MudMenuItem>
+                            </MudMenu>
+                        </MudButtonGroup>
+
                     </MudCardContent>
                 </MudCard>
 
@@ -157,15 +157,30 @@ else
                                        OnClick="OpenManageStopsDialog">
                                 Manage Stops
                             </MudButton>
-                            <MudButton Variant="Variant.Outlined"
-                                       Color="@accent"
-                                       Size="Size.Small"
-                                       StartIcon="@(_showReturn ? Icons.Material.Filled.ArrowBack : Icons.Material.Filled.ArrowForward)"
-                                       EndIcon="@Icons.Material.Filled.SyncAlt"
-                                       Style="transition:color 0.3s ease; text-transform:none;"
-                                       OnClick="async () => await SetDirection(!_showReturn)">
-                                @(_showReturn ? "Return" : "Forward")
-                            </MudButton>
+                            <MudStack Row="true" Spacing="1">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="@accent"
+                                           Size="Size.Small"
+                                           StartIcon="@(_showReturn ? Icons.Material.Filled.ArrowBack : Icons.Material.Filled.ArrowForward)"
+                                           EndIcon="@Icons.Material.Filled.SyncAlt"
+                                           Style="transition:color 0.3s ease; text-transform:none;"
+                                           OnClick="async () => await SetDirection(!_showReturn)">
+                                    @(_showReturn ? "Return" : "Forward")
+                                </MudButton>
+                                @if (!_showReturn && _route.Stops.Any() && !_route.ReturnStops.Any())
+                                {
+                                    <MudTooltip Text="Auto-generate return stops by reversing forward stops">
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Warning"
+                                                   Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.AutoFixHigh"
+                                                   Style="text-transform:none;"
+                                                   OnClick="GenerateReturnStops">
+                                            Gen Return
+                                        </MudButton>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
                         </MudStack>
                     </CardHeaderActions>
                 </MudCardHeader>
@@ -192,7 +207,7 @@ else
                                     <ItemContent>
                                         <MudStack Spacing="0">
                                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                                <MudText Typo="Typo.body1" Class="fw-bold">@originLabel</MudText>
+                                                <MudText Typo="Typo.body1" Class="fw-bold">@originLabel.Name</MudText>
                                                 <MudChip T="string" Size="Size.Small" Color="@accent" Variant="Variant.Outlined">Origin</MudChip>
                                             </MudStack>
                                             <MudText Typo="Typo.caption" Class="mud-text-secondary">Start of route</MudText>
@@ -224,7 +239,7 @@ else
                                     <ItemContent>
                                         <MudStack Spacing="0">
                                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                                <MudText Typo="Typo.body1" Class="fw-bold">@destLabel</MudText>
+                                                <MudText Typo="Typo.body1" Class="fw-bold">@destLabel.Name</MudText>
                                                 <MudChip T="string" Size="Size.Small" Color="@accent" Variant="Variant.Outlined">Destination</MudChip>
                                             </MudStack>
                                             <MudText Typo="Typo.caption" Class="mud-text-secondary">End of route</MudText>
@@ -240,6 +255,95 @@ else
             </MudCard>
         </MudItem>
     </MudGrid>
+
+    @* ── Edit Route Dialog ── *@
+    <MudDialog Visible="_editDialogVisible" Options="_smallDialogOptions">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                <MudText Typo="Typo.h6" Class="fw-bold">Edit Route</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudStack Spacing="3" Class="pt-1">
+                <MudTextField @bind-Value="_editForm.RouteCode"
+                              Label="Route Code"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Tag"
+                              Required="true" />
+
+                <MudSelect T="int"
+                           @bind-Value="_editForm.LocationStartId"
+                           Label="Start Location"
+                           Variant="Variant.Outlined"
+                           Adornment="Adornment.Start"
+                           AdornmentIcon="@Icons.Material.Filled.TripOrigin"
+                           AdornmentColor="Color.Primary">
+                    @foreach (var loc in _allLocations)
+                    {
+                        <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="int"
+                           @bind-Value="_editForm.LocationEndId"
+                           Label="End Location"
+                           Variant="Variant.Outlined"
+                           Adornment="Adornment.Start"
+                           AdornmentIcon="@Icons.Material.Filled.Place"
+                           AdornmentColor="Color.Error">
+                    @foreach (var loc in _allLocations)
+                    {
+                        <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
+                    }
+                </MudSelect>
+
+                @if (_editForm.LocationStartId != 0 && _editForm.LocationStartId == _editForm.LocationEndId)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        Start and end location cannot be the same.
+                    </MudAlert>
+                }
+            </MudStack>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@(_editForm.LocationStartId == _editForm.LocationEndId || string.IsNullOrWhiteSpace(_editForm.RouteCode))"
+                       OnClick="SaveEdit">
+                Save Changes
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+    @* ── Delete Confirmation Dialog ── *@
+    <MudDialog Visible="_deleteDialogVisible" Options="_smallDialogOptions">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" />
+                <MudText Typo="Typo.h6" Class="fw-bold">Delete Route</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body1">
+                Are you sure you want to delete <b>@_route.RouteCode</b>? This action cannot be undone.
+            </MudText>
+            @if (_route.AssignedJeepneys.Any())
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-3">
+                    This route has @_route.AssignedJeepneys.Count assigned jeepney(s). Make sure to reassign them first.
+                </MudAlert>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ConfirmDelete">
+                Delete
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 
     @* ── Manage Stops Dialog ── *@
     <MudDialog Visible="_dialogVisible" Options="_dialogOptions">
@@ -268,18 +372,21 @@ else
                                   Margin="Margin.Dense"
                                   Adornment="Adornment.End"
                                   AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Value="@_searchQuery"
-                                  ValueChanged="HandleSearchChange"
+                                  @bind-Value="_searchQuery"
                                   Immediate="true"
                                   Clearable="true" />
 
                     <MudDivider Class="my-3" />
 
-                    @if (_isSearching)
-                    {
-                        <MudProgressLinear Indeterminate="true" Color="@accent" />
+                    @{
+                        var filtered = string.IsNullOrWhiteSpace(_searchQuery)
+                            ? _allLocations
+                            : _allLocations
+                                .Where(l => l.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase))
+                                .ToList();
                     }
-                    else if (!string.IsNullOrWhiteSpace(_searchQuery) && !_searchResults.Any())
+
+                    @if (!filtered.Any())
                     {
                         <MudText Typo="Typo.body2" Class="mud-text-secondary text-center mt-4">
                             No locations found.
@@ -287,8 +394,8 @@ else
                     }
                     else
                     {
-                        <MudList T="LocationDto" DisablePadding="true">
-                            @foreach (var loc in _searchResults)
+                        <MudList T="LocationDto" DisablePadding="true" Style="max-height:340px; overflow-y:auto;">
+                            @foreach (var loc in filtered)
                             {
                                 bool alreadyAdded = _stops.Any(s => s.Id == loc.Id);
                                 <MudListItem T="LocationDto"
@@ -360,7 +467,6 @@ else
                             {
                                 var index = i;
                                 var stop = _stops[i];
-
                                 <MudTimelineItem Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">
                                     <ItemContent>
                                         <MudPaper Elevation="1" Class="pa-2" Style="border-radius:8px;">
@@ -432,25 +538,25 @@ else
     private RouteDetail? _route;
     private List<BreadcrumbItem> _breadcrumbs = new();
 
+    // ── All locations (loaded once) ──
+    private List<LocationDto> _allLocations = new();
+
     // ── Direction toggle ──
     private bool _showReturn = false;
-    private bool _isFading   = false;
+    private bool _isFading = false;
 
     private async Task SetDirection(bool returnDirection)
     {
         if (_showReturn == returnDirection) return;
-
         _isFading = true;
         StateHasChanged();
-        await Task.Delay(220); // match CSS transition
-
+        await Task.Delay(220);
         _showReturn = returnDirection;
-        _isFading   = false;
+        _isFading = false;
         StateHasChanged();
     }
 
-    // ── Dialog ──
-    private bool _dialogVisible = false;
+    // ── Dialog options ──
     private DialogOptions _dialogOptions = new()
     {
         MaxWidth = MaxWidth.Large,
@@ -458,16 +564,35 @@ else
         CloseOnEscapeKey = true
     };
 
-    private string _searchQuery = string.Empty;
-    private List<LocationDto> _searchResults = new();
-    private List<LocationDto> _stops = new();
-    private bool _isSearching = false;
-    private CancellationTokenSource? _cts;
+    private DialogOptions _smallDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Small,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
 
+    // ── Manage Stops dialog state ──
+    private bool _dialogVisible = false;
+    private string _searchQuery = string.Empty;
+    private List<LocationDto> _stops = new();
+
+    // ── Edit dialog state ──
+    private bool _editDialogVisible = false;
+    private UpdateRouteRequest _editForm = new();
+
+    // ── Delete dialog state ──
+    private bool _deleteDialogVisible = false;
+
+    // ── Init ──
     protected override async Task OnInitializedAsync()
     {
-        _route = await Http.GetFromJsonAsync<RouteDetail>($"/api/v1/routes/{Id}");
+        await LoadRoute();
+        _allLocations = await Http.GetFromJsonAsync<List<LocationDto>>("/api/v1/locations") ?? new();
+    }
 
+    private async Task LoadRoute()
+    {
+        _route = await Http.GetFromJsonAsync<RouteDetail>($"/api/v1/routes/{Id}");
         _breadcrumbs = new List<BreadcrumbItem>
         {
             new("Routes", href: "/routes"),
@@ -475,47 +600,79 @@ else
         };
     }
 
-    private async Task OpenManageStopsDialog()
+    // ── Edit ──
+    private void OpenEditDialog()
     {
-        // Load whichever direction is currently active into the builder
+        _editForm = new UpdateRouteRequest
+        {
+            Id = _route!.Id,
+            RouteCode = _route.RouteCode,
+            LocationStartId = _route.LocationStart.Id,
+            LocationEndId = _route.LocationEnd.Id,
+        };
+        _editDialogVisible = true;
+    }
+
+    private async Task SaveEdit()
+    {
+        var response = await Http.PutAsJsonAsync($"/api/v1/routes/{Id}", _editForm);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Route updated.", Severity.Success);
+            _editDialogVisible = false;
+            await LoadRoute();
+        }
+        else
+        {
+            Snackbar.Add(await response.Content.ReadAsStringAsync(), Severity.Error);
+        }
+    }
+
+    // ── Delete ──
+    private void OpenDeleteConfirmation() => _deleteDialogVisible = true;
+
+    private async Task ConfirmDelete()
+    {
+        var response = await Http.DeleteAsync($"/api/v1/routes/{Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Route deleted.", Severity.Success);
+            Nav.NavigateTo("/routes");
+        }
+        else
+        {
+            Snackbar.Add(await response.Content.ReadAsStringAsync(), Severity.Error);
+            _deleteDialogVisible = false;
+        }
+    }
+
+    // ── Generate Return Stops ──
+    private async Task GenerateReturnStops()
+    {
+        var response = await Http.PostAsync($"/api/v1/routes/{Id}/generate-return-stops", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Return stops generated from forward stops.", Severity.Success);
+            await LoadRoute();
+            await SetDirection(true);
+        }
+        else
+        {
+            Snackbar.Add(await response.Content.ReadAsStringAsync(), Severity.Error);
+        }
+    }
+
+    // ── Manage Stops ──
+    private void OpenManageStopsDialog()
+    {
         var source = _showReturn ? _route!.ReturnStops : _route!.Stops;
         _stops = source
             .OrderBy(s => s.StopIndex)
             .Select(s => new LocationDto { Id = s.LocationId, Name = s.LocationName })
             .ToList();
 
-        _searchQuery   = string.Empty;
-        _searchResults = new();
+        _searchQuery = string.Empty;
         _dialogVisible = true;
-        await HandleSearchChange(_searchQuery);
-    }
-
-    private async Task HandleSearchChange(string query)
-    {
-        _searchQuery = query;
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            _isSearching = true;
-            await Task.Delay(300, _cts.Token);
-            _searchResults = await Http.GetFromJsonAsync<List<LocationDto>>(
-                $"/api/v1/options/locations/",
-                _cts.Token) ?? new();
-                _isSearching = false;
-        }
-        else
-        try
-        {
-            _isSearching = true;
-            await Task.Delay(300, _cts.Token);
-            _searchResults = await Http.GetFromJsonAsync<List<LocationDto>>(
-                $"/api/v1/options/locations/search?query={Uri.EscapeDataString(query)}",
-                _cts.Token) ?? new();
-        }
-        catch (TaskCanceledException) { }
-        finally { _isSearching = false; }
     }
 
     private void AddStop(LocationDto loc)
@@ -538,8 +695,8 @@ else
         var stops = _stops.Select((s, i) => new LocationIndexPair { LocationId = s.Id, Index = i + 1 }).ToList();
         var request = new AddRouteStopRequest
         {
-            RouteId      = Id,
-            RouteStops   = stops,
+            RouteId = Id,
+            RouteStops = stops,
             RouteDirection = _showReturn ? RouteDirection.Return : RouteDirection.Forward
         };
         var response = await Http.PutAsJsonAsync($"/api/v1/routes/{Id}/stops", request);
@@ -548,12 +705,11 @@ else
         {
             Snackbar.Add("Route sequence saved.", Severity.Success);
             _dialogVisible = false;
-            _route = await Http.GetFromJsonAsync<RouteDetail>($"/api/v1/routes/{Id}");
+            await LoadRoute();
         }
         else
         {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            Snackbar.Add(errorMessage);
+            Snackbar.Add(await response.Content.ReadAsStringAsync(), Severity.Error);
         }
     }
 }

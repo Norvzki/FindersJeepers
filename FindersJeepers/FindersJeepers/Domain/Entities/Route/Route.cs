@@ -43,6 +43,17 @@ public class Route : AggregateRoot
         };
     }
 
+    public void UpdateInformation(string routeCode, int locationStartId, int locationEndId)
+    {
+        if (string.IsNullOrEmpty(routeCode)) throw new DomainException("Route Code cannot be empty!");
+        if (!IdValidator.ValidateId(locationEndId)) throw new DomainException("Location End ID is invalid!");
+        if (!IdValidator.ValidateId(locationStartId)) throw new DomainException("Location Start ID is invalid!");
+
+        RouteCode = routeCode;
+        LocationStartId = locationStartId;
+        LocationEndId = locationEndId;
+    }
+
     public void AddStop(int locationId, int index, RouteDirection direction)
     {
         if (locationId < 1) throw new DomainException("Invalid location id!");

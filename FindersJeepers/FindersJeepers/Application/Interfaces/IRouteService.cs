@@ -6,4 +6,5 @@ public interface IRouteService
     Task<RouteDetail> GetDetailAsync(int routeId);
     Task AddRouteStopsAsync(AddRouteStopRequest req);
     Task DeleteAsync(int routeId);
+    Task UpdateAsync(UpdateRouteRequest req);
 }

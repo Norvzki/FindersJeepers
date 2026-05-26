@@ -1,5 +1,6 @@
 ﻿
 
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 
 public class RouteService : IRouteService
@@ -81,8 +82,18 @@ public class RouteService : IRouteService
         {
             AssignedJeepneys = assignedJeepneys,
             Id = route.Id,
-            LocationEnd = locationEnd.Name,
-            LocationStart = locationStart.Name,
+            LocationEnd = new LocationDto
+            {
+                Id = locationEnd.Id,
+                Name = locationEnd.Name,
+                Description = locationEnd.Description,
+            },
+            LocationStart = new LocationDto
+            {
+                Id = locationStart.Id,
+                Name = locationStart.Name,
+                Description = locationStart.Description,
+            },
             RouteCode = route.RouteCode,
             Stops = stops,
             ReturnStops = rStops
@@ -90,12 +101,20 @@ public class RouteService : IRouteService
     }
     public async Task CreateRouteAsync(CreateRouteRequest req)
     {
+        var routeOfCode = _uow.Routes.GetByRouteCodeAsync(req.RouteCode);
+        if(routeOfCode != null)
+            throw new ApplicationException("That route code is already taken!");
+
         var route = Route.Create(req.RouteCode, req.StartLocation, req.EndLocation);
         await _uow.Routes.AddAsync(route);
         await _uow.SaveChangesAsync();
     }
     public async Task AddRouteStopsAsync(AddRouteStopRequest req)
     {
+        var currentTrip = await _uow.Trips.GetActiveTripsOnRouteAsync(req.RouteId);
+        if (currentTrip.Any())
+            throw new ApplicationException("You cannot change the stop sequence of a route if it's being used by an active trip!");
+
         var route = await _uow.Routes.GetByIdAsync(req.RouteId);
 
         if (req.RouteDirection == RouteDirection.Forward)
@@ -130,4 +149,22 @@ public class RouteService : IRouteService
         await _uow.SaveChangesAsync();
     }
 
+    public async Task UpdateAsync(UpdateRouteRequest req)
+    {
+        var route = await _uow.Routes.GetByIdAsync(req.Id);
+        var routeWithCode = await _uow.Routes.Get()
+            .Where(x => x.RouteCode == req.RouteCode && x.Id != route.Id)
+            .FirstOrDefaultAsync();
+
+        if (routeWithCode != null)
+            throw new ApplicationException("That route code is already taken!");
+
+        var currentTrip = await _uow.Trips.GetActiveTripsOnRouteAsync(route.Id);
+        if (currentTrip.Any())
+            throw new ApplicationException("You cannot change the stop sequence of a route if it's being used by an active trip!");
+
+        route.UpdateInformation(req.RouteCode, req.LocationStartId, req.LocationEndId);
+        _uow.Routes.Update(route);
+        await _uow.SaveChangesAsync();
+    }
 }

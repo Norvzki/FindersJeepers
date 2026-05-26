@@ -32,6 +32,14 @@ public class RouteController : ControllerBase
         await _routeService.CreateRouteAsync(request);
         return Created();
     }
+
+    [HttpPut("{routeId:int}")]
+    public async Task<IActionResult> UpdateRoute([FromBody] UpdateRouteRequest request)
+    {
+        await _routeService.UpdateAsync(request);
+        return Ok();
+    }
+
     [HttpPut("{routeId:int}/stops/")]
     public async Task<IActionResult> AddStops(int routeId, [FromBody] AddRouteStopRequest request)
     {
