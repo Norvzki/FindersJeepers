@@ -1,15 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+using MudBlazor.Utilities.Clone;
 using System.Data;
 using static MudBlazor.Colors;
 public class DriverService : IDriverService
 {
     private readonly IUnitOfWork _uow;
-
-    public DriverService(IUnitOfWork uow)
+    private readonly IJeepService _jeepService;
+    public DriverService(IUnitOfWork uow, IJeepService jeepService)
     {
         _uow = uow;
+        _jeepService = jeepService;
     }
 
     public async Task CreateAsync(CreateDriverRequest req)
@@ -69,11 +71,27 @@ public class DriverService : IDriverService
         if (currentTrip != null)
             throw new ApplicationException("A driver cannot be deleted if they're currently on a trip!");
 
+        await _uow.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
+        try
+        {
+            var jeeps = await _uow.Jeepneys.GetByDriverAsync(driverId);
 
-        driver.Delete();
-        _uow.Drivers.Update(driver);
-        await _uow.SaveChangesAsync();
+            foreach(var j in jeeps)
+            {
+                j.RemoveDriver(driverId);
+                _uow.Jeepneys.Update(j);
+            }
+
+            driver.Delete();
+            _uow.Drivers.Update(driver);
+            await _uow.CommitAsync();
+            await _uow.SaveChangesAsync();
+        } catch
+        {
+            await _uow.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task UpdateAsync(UpdateDriverRequest request)
@@ -128,7 +146,7 @@ public class DriverService : IDriverService
                     driverName = $"{d.FirstName} {d.LastName}";
                 }
             }
-
+            if(x.Jeepney.IsDeleted == false)
             assignedJeepneys.Add(new JeepneySummary
             {
                 Id = x.Jeepney.Id,
@@ -170,7 +188,7 @@ public class DriverService : IDriverService
             AssignedJeepneys = assignedJeepneys,
             TripHistory = trips
         };
-    }
+    }   
 
     public async Task AssignJeepneysAsync(AssignJeepneysRequest request)
     {

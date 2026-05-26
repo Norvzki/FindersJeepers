@@ -78,7 +78,7 @@ public class JeepService : IJeepService
         var pastTrips = await (
             from t in _uow.Trips.Get()
             where t.JeepneyId == jeep.Id && t.Status == TripStatus.Completed
-            join d in _uow.Drivers.Get() on t.DriverId equals d.Id
+            join d in _uow.Drivers.Get(FetchOptions.IncludeDeleted) on t.DriverId equals d.Id
             join r in _uow.Routes.Get(FetchOptions.IncludeDeleted) on t.RouteId equals r.Id
             select new TripSummary
             {
@@ -140,6 +140,11 @@ public class JeepService : IJeepService
         var currentTrip = await _uow.Trips.GetCurrentTripByJeepneyAsync(jeepId);
         if (currentTrip != null)
             throw new ApplicationException("A jeep cannot be deleted if its currently on a trip!");
+
+        foreach(var d in jeepney.Drivers)
+        {
+            jeepney.RemoveDriver(d.DriverId);
+        }
 
         jeepney.Delete();
         _uow.Jeepneys.Update(jeepney);
