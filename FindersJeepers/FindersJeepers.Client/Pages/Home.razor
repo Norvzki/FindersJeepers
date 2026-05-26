@@ -291,6 +291,16 @@
                             Manage Routes
                         </MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.AutoAwesome"
+                                   OnClick="HandleGenerate">
+                            Generate Entities
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.SmartToy"
+                                   OnClick="HandleSimulate">
+                            Simulate
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
                                    StartIcon="@Icons.Material.Filled.Place"
                                    OnClick="@(() => NavigateTo("locations"))">
                             Manage Locations
@@ -364,6 +374,23 @@
     {
         await LoadDashboard();
         _loading = false;
+    }
+
+    private async Task HandleSimulate()
+    {
+        var response = await Http.PostAsync("/api/v1/presentation/simulate", null);
+        if (response.IsSuccessStatusCode)
+            Snackbar.Add("Simulation started!");
+        else
+            Snackbar.Add("Something went wrong.");
+    }
+    private async Task HandleGenerate()
+    {
+        var response = await Http.PostAsync("/api/v1/presentation/generate", null);
+        if (response.IsSuccessStatusCode)
+            Snackbar.Add("Entities Generated!");
+        else
+            Snackbar.Add("Something went wrong.");
     }
 
     private async Task LoadDashboard()
