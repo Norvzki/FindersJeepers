@@ -40,44 +40,57 @@ else
         @foreach (var jeepney in FilteredJeepneys)
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudCard Elevation="2" Style="border-radius:12px;" Class="cursor-pointer transition-card" @onclick="() => NavigateToJeepney(jeepney.Id)">
-                    <MudCardHeader>
-                        <CardHeaderAvatar>
-                            <MudAvatar Color="Color.Secondary" Size="Size.Large" Variant="Variant.Filled">
-                                <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
-                            </MudAvatar>
-                        </CardHeaderAvatar>
-                        <CardHeaderContent>
-                            <MudText Typo="Typo.subtitle1" Class="fw-bold">@jeepney.PlateNumber</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Body #@jeepney.BodyNumber</MudText>
-                        </CardHeaderContent>
-                        <CardHeaderActions>
-                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
-                                <MudMenuItem OnClick="() => OpenEditDialog(jeepney)">Edit</MudMenuItem>
-                                <MudMenuItem OnClick="() => ConfirmDelete(jeepney)">
-                                    <MudText Color="Color.Error">Delete</MudText>
-                                </MudMenuItem>
-                            </MudMenu>
-                        </CardHeaderActions>
-                    </MudCardHeader>
-                    <MudDivider />
-                    <MudCardContent Class="pt-3">
-                        <MudStack Spacing="1">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mud-text-secondary" />
-                                <MudText Typo="Typo.body2">Testing</MudText>
+                    <MudCard Elevation="1" Style="border-radius:12px;" Class="cursor-pointer transition-card" @onclick="() => NavigateToJeepney(jeepney.Id)">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Secondary" Size="Size.Large" Variant="Variant.Filled">
+                                    <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1">@jeepney.PlateNumber</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Body #@jeepney.BodyNumber</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" @onclick:stopPropagation="true">
+                                    <MudMenuItem OnClick="() => OpenEditDialog(jeepney)">Edit</MudMenuItem>
+                                    <MudMenuItem OnClick="() => ConfirmDelete(jeepney)">
+                                        <MudText Color="Color.Error">Delete</MudText>
+                                    </MudMenuItem>
+                                </MudMenu>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+    
+                        <MudDivider Light="true" />
+    
+                        <MudCardContent Class="pt-3">
+                            <MudStack Spacing="1">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Route:</MudText>
+                                    <MudText Typo="Typo.body2">@jeepney.RouteCode</MudText>
+                                </MudStack>
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.AirlineSeatReclineNormal" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Capacity:</MudText>
+                                    <MudText Typo="Typo.body2">@jeepney.Capacity</MudText>
+                                </MudStack>
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Drivers assigned:</MudText>
+                                    <MudText Typo="Typo.body2">@jeepney.DriverCount</MudText>
+                                </MudStack>
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Commute" Size="Size.Small" Class="mud-text-secondary" />
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Total trips:</MudText>
+                                    <MudText Typo="Typo.body2">@jeepney.TripCount</MudText>
+                                </MudStack>
                             </MudStack>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
-                                <MudText Typo="Typo.body2">Route: @jeepney.RouteCode</MudText>
-                            </MudStack>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudIcon Icon="@Icons.Material.Filled.AirlineSeatReclineNormal" Size="Size.Small" Class="mud-text-secondary" />
-                                <MudText Typo="Typo.body2">Capacity: @jeepney.Capacity</MudText>
-                            </MudStack>
-                        </MudStack>
-                    </MudCardContent>
-                </MudCard>
+                        </MudCardContent>
+                    </MudCard>
             </MudItem>
         }
     </MudGrid>
@@ -192,6 +205,7 @@ else
         if(response.IsSuccessStatusCode)
         {
             Snackbar.Add("Jeepney added!");
+            CloseDialog();
         }
         else
         {
@@ -199,8 +213,6 @@ else
             Snackbar.Add(errorMessage);
         }
         await LoadData();
-
-        CloseDialog();
     }
 
     private async Task SaveDriverChange()

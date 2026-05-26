@@ -84,7 +84,7 @@ else
                     <MudStack Spacing="1">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mud-text-secondary" />
-                            <MudText Typo="Typo.body2">@driver.ContactNumber</MudText>
+                                    <MudText Typo="Typo.body2">@(driver.ContactNumber != string.Empty ? driver.ContactNumber : "No contact number")</MudText>
                         </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mud-text-secondary" />
@@ -116,7 +116,7 @@ else
                 <MudTextField @bind-Value="_form.LicenseNumber" Label="License Number" Variant="Variant.Outlined" Required="true" />
             </MudItem>
             <MudItem xs="12">
-                <MudTextField @bind-Value="_form.ContactNumber" Label="Contact Number" Variant="Variant.Outlined" Required="true" />
+                <MudTextField @bind-Value="_form.ContactNumber" Label="Contact Number" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12">
                 <MudDatePicker @bind-Date="_form.DateHired" Required="true" Label="Date Hired" Variant="Variant.Outlined" />
@@ -169,6 +169,7 @@ else
     private void OpenAddDialog()
     {
         _form = new DriverForm();
+        _form.DateHired = DateTime.MinValue;
         _isEditing = false;
         _dialogVisible = true;
 
@@ -212,13 +213,14 @@ else
         if(response.IsSuccessStatusCode)
         {
             Snackbar.Add("Successfully added Driver!");
+            CloseDialog();
         } else
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             Snackbar.Add(errorMessage);
         }
 
-        CloseDialog();
+
         await LoadData();
     }
 
