@@ -145,7 +145,7 @@ public class JeepService : IJeepService
         if (currentTrip != null)
             throw new ApplicationException("A jeep cannot be deleted if its currently on a trip!");
 
-        foreach(var d in jeepney.Drivers)
+        foreach(var d in jeepney.Drivers.Where(d=>d.UnassignedAt == null))
         {
             jeepney.RemoveDriver(d.DriverId);
         }

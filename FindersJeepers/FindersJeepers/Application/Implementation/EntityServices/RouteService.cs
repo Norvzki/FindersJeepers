@@ -103,7 +103,7 @@ public class RouteService : IRouteService
     }
     public async Task CreateRouteAsync(CreateRouteRequest req)
     {
-        var routeOfCode = _uow.Routes.GetByRouteCodeAsync(req.RouteCode);
+        var routeOfCode = await _uow.Routes.GetByRouteCodeAsync(req.RouteCode);
         if(routeOfCode != null)
             throw new ApplicationException("That route code is already taken!");
 
