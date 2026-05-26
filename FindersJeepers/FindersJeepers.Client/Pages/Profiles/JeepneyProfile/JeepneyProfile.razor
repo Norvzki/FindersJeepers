@@ -3,6 +3,7 @@
 @using MudBlazor
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject NavigationManager nav
 
 @if (_vm?.Jeepney is null)
 {
@@ -78,7 +79,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _vm = new JeepneyDetailViewModel(Http, Snackbar);
+        _vm = new JeepneyDetailViewModel(Http, Snackbar, nav);
         await _vm.InitializeAsync(Id);
     }
 }

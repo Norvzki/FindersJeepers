@@ -28,7 +28,7 @@
         <MudStack Spacing="2" Class="w-100 text-start">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mud-text-secondary" />
-                <MudText Typo="Typo.body2">@Driver.ContactNumber</MudText>
+                <MudText Typo="Typo.body2">@(Driver.ContactNumber != string.Empty ? Driver.ContactNumber : "No contact number")</MudText>
             </MudStack>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mud-text-secondary" />

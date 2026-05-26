@@ -592,7 +592,7 @@ else
 
     private async Task LoadRoute()
     {
-        _route = await Http.GetFromJsonAsync<RouteDetail>($"/api/v1/routes/{Id}");
+        _route = await Http.GetFromJsonOrRedirectAsync<RouteDetail>($"/api/v1/routes/{Id}", Nav);
         _breadcrumbs = new List<BreadcrumbItem>
         {
             new("Routes", href: "/routes"),

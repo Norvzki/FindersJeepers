@@ -1,4 +1,5 @@
-﻿using MudBlazor;
+﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using System.Net.Http.Json;
 using static System.Net.WebRequestMethods;
 
@@ -6,6 +7,7 @@ public class JeepneyDetailViewModel
 {
     private readonly HttpClient _http;
     private readonly ISnackbar _snackbar;
+    private readonly NavigationManager nav;
 
     // ── Data ──
     public int JeepneyId { get; private set; }
@@ -59,10 +61,11 @@ public class JeepneyDetailViewModel
     public JeepneyForm Form { get; set; } = new();
     public List<RouteSummary> _availableRoutes { get; set; } = new();
 
-    public JeepneyDetailViewModel(HttpClient http, ISnackbar snackbar)
+    public JeepneyDetailViewModel(HttpClient http, ISnackbar snackbar, NavigationManager nav)
     {
         _http = http;
         _snackbar = snackbar;
+        this.nav = nav;
     }
 
     public async Task InitializeAsync(int jeepneyId)
@@ -73,7 +76,7 @@ public class JeepneyDetailViewModel
 
     public async Task LoadDataAsync()
     {
-        Jeepney = await _http.GetFromJsonAsync<JeepneyDetail>($"/api/v1/jeepneys/{JeepneyId}");
+        Jeepney = await _http.GetFromJsonOrRedirectAsync<JeepneyDetail>($"/api/v1/jeepneys/{JeepneyId}", nav);
         Breadcrumbs = new List<BreadcrumbItem>
         {
             new("Jeepneys", href: "/jeepneys"),

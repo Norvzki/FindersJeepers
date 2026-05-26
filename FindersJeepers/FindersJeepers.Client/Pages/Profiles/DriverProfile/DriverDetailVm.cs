@@ -1,10 +1,12 @@
-﻿using MudBlazor;
+﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using System.Net.Http.Json;
 
 public class DriverDetailViewModel
 {
     private readonly HttpClient _http;
     private readonly ISnackbar _snackbar;
+    private readonly NavigationManager nav;
 
     // ── Data ──
     public int DriverId { get; private set; }
@@ -39,10 +41,11 @@ public class DriverDetailViewModel
     public List<JeepneyOption>? AvailableJeepneys { get; private set; }
     public HashSet<int> SelectedJeepneyIds { get; set; } = new();
 
-    public DriverDetailViewModel(HttpClient http, ISnackbar snackbar)
+    public DriverDetailViewModel(HttpClient http, ISnackbar snackbar, NavigationManager nav)
     {
         _http = http;
         _snackbar = snackbar;
+        this.nav = nav;
     }
 
     public async Task InitializeAsync(int driverId)
@@ -59,7 +62,7 @@ public class DriverDetailViewModel
 
     public async Task LoadDataAsync()
     {
-        Driver = await _http.GetFromJsonAsync<DriverDetail>($"/api/v1/drivers/{DriverId}");
+        Driver = await _http.GetFromJsonOrRedirectAsync<DriverDetail>($"/api/v1/drivers/{DriverId}", nav);
     }
 
     // ── Start Trip ──

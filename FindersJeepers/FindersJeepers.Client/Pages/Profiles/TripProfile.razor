@@ -2,6 +2,7 @@
 @using MudBlazor
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject NavigationManager nav
 
 <style>
     .passenger-grid {
@@ -458,7 +459,7 @@ else
 
     private async Task LoadData()
     {
-        _trip = await Http.GetFromJsonAsync<TripDetailDto>($"/api/v1/trips/{Id}");
+        _trip = await Http.GetFromJsonOrRedirectAsync<TripDetailDto>($"/api/v1/trips/{Id}", nav);
     }
 
     protected override async Task OnInitializedAsync()
