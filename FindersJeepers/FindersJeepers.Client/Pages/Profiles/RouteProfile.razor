@@ -649,7 +649,7 @@ else
     // ── Generate Return Stops ──
     private async Task GenerateReturnStops()
     {
-        var response = await Http.PostAsync($"/api/v1/routes/{Id}/generate-return-stops", null);
+        var response = await Http.PutAsync($"/api/v1/routes/{Id}/stops/generate-return", null);
         if (response.IsSuccessStatusCode)
         {
             Snackbar.Add("Return stops generated from forward stops.", Severity.Success);

@@ -46,6 +46,12 @@ public class RouteController : ControllerBase
         await _routeService.AddRouteStopsAsync(request);
         return Created();
     }
+    [HttpPut("{routeId:int}/stops/generate-return")]
+    public async Task<IActionResult> GenerateReturn(int routeId)
+    {
+        await _routeService.AutoGenerateReturnRouteAsync(routeId);
+        return Created();
+    }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)

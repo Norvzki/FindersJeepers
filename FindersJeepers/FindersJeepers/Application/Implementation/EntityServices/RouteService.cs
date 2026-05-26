@@ -187,4 +187,37 @@ public class RouteService : IRouteService
         _uow.Routes.Update(route);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task AutoGenerateReturnRouteAsync(int routeId)
+    {
+        var activeTrips = await _uow.Trips.GetActiveTripsOnRouteAsync(routeId);
+        if (activeTrips.Any())
+            throw new ApplicationException("You cannot alter the route sequence while it has active trips running!");
+
+        var route = await _uow.Routes.GetByIdAsync(routeId);
+        if (route == null || route.IsDeleted)
+            throw new InvalidIdException("Invalid route ID!");
+
+        var forwardStops = route.Stops
+            .Where(s => s.Direction == RouteDirection.Forward)
+            .OrderBy(s => s.StopIndex)
+            .ToList();
+
+        if (!forwardStops.Any())
+            throw new ApplicationException("Cannot generate a return route because no forward stops have been defined yet!");
+
+        route.ClearReturnStops();
+
+        int newIndex = 0;
+        for (int i = forwardStops.Count - 1; i >= 0; i--)
+        {
+            var targetStop = forwardStops[i];
+
+            route.AddStop(targetStop.LocationId, newIndex, RouteDirection.Return);
+            newIndex++;
+        }
+
+        _uow.Routes.Update(route);
+        await _uow.SaveChangesAsync();
+    }
 }
