@@ -16,6 +16,7 @@ public class JeepneyDetailViewModel
 
     // ── Computed status ──
     public string JeepneyStatus =>
+        Jeepney?.RouteCode is "" ? "Unavailable" :
         Jeepney?.CurrentTrip is null ? "Available" :
         Jeepney.CurrentTrip.Status == "Waiting" ? "Waiting" : "On a Trip";
 
@@ -23,6 +24,7 @@ public class JeepneyDetailViewModel
         JeepneyStatus switch
         {
             "Available" => Color.Info,
+            "Unavailable" => Color.Error,
             "Waiting" => Color.Warning,
             _ => Color.Success
         };
@@ -192,7 +194,7 @@ public class JeepneyDetailViewModel
             BodyNumber = Jeepney.BodyNumber,
             Capacity = Jeepney.Capacity,
             PlateNumber = Jeepney.PlateNumber,
-            RouteId = _availableRoutes.Where(x => x.RouteCode == Jeepney.RouteCode).Select(x => x.Id).FirstOrDefault()
+            RouteId = Jeepney.RouteCode == string.Empty ? null : _availableRoutes.Where(x => x.RouteCode == Jeepney.RouteCode).Select(x => x.Id).FirstOrDefault()
         };
     }
     public void CloseEditJeepneyDialog() => EditJeepneyVisible = false;
