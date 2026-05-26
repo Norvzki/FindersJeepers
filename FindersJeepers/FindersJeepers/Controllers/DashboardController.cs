@@ -16,11 +16,5 @@ public class DashboardController : ControllerBase
         var result = await _dashboardService.GetDashboardSummaryAsync();
         return Ok(result);
     }
-    [HttpGet("jeepneys")]
-    public async Task<IActionResult> GetTotalJeepneys()
-    {
-        var result = await _dashboardService.GetTotalJeepneysAsync();
-        return Ok(result);
-    }
 }
 
