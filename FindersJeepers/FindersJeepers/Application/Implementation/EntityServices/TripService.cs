@@ -239,6 +239,7 @@ public class TripService : ITripService
     public async Task DeleteAsync(int tripId)
     {
         var trip = await _uow.Trips.GetByIdAsync(tripId);
+        if (trip == null || trip.IsDeleted) throw new InvalidIdException("This trip is deleted or id is invalid");
 
         if (trip.Status != TripStatus.Completed)
             throw new ApplicationException("You cannot delete an active trip!");
