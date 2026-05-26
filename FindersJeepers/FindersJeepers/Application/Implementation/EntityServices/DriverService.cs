@@ -85,8 +85,8 @@ public class DriverService : IDriverService
 
             driver.Delete();
             _uow.Drivers.Update(driver);
-            await _uow.CommitAsync();
             await _uow.SaveChangesAsync();
+            await _uow.CommitAsync();
         } catch
         {
             await _uow.RollbackAsync();
