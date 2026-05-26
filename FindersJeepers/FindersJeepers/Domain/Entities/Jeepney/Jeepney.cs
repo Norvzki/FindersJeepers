@@ -53,6 +53,8 @@ public class Jeepney : AggregateRoot
         RouteId = routeId;
     }
 
+    public void ClearRoute() => RouteId = null;
+
     public void AssignDriver(int driverId)
     {
         if (driverId < 1) throw new DomainException("Invalid driver id!");
