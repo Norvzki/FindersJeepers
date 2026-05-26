@@ -18,6 +18,13 @@ public class GlobalExceptionHandler : IExceptionHandler
         string clientMessage;
         switch (exception)
         {
+            case InvalidIdException notFoundEx:
+                _logger.LogWarning("Resource not found: {Message}", notFoundEx.Message);
+                httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+                httpContext.Response.ContentType = "text/plain";
+                await httpContext.Response.WriteAsync(notFoundEx.Message, cancellationToken);
+                return true;
+
             case DomainException domainEx:
                 _logger.LogWarning("Domain rule violation: {Message}", domainEx.Message);
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
