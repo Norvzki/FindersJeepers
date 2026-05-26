@@ -4,160 +4,413 @@
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
-
 <PageTitle>Dashboard</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-6">
-    <MudText Typo="Typo.h4" Class="mb-1 fw-bold">Dashboard</MudText>
-    <MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Overview of your fleet, drivers and recent activity.</MudText>
 
-    <!-- Stats -->
-    <MudGrid Spacing="3" Class="mb-4">
-        <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="1" Class="pa-3">
+    <!-- Header -->
+    <MudText Typo="Typo.h4" Class="mb-1 fw-bold">Dashboard</MudText>
+    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">
+        Overview of your fleet, drivers and recent activity. Last updated: @DateTime.Now.ToString("hh:mm tt")
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+    }
+
+    <!-- ── Row 1: Stat Cards ──────────────────────────────────────────────── -->
+    <MudGrid Spacing="3" Class="mb-6">
+
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-secondary);">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudStack>
-                        <MudText Typo="Typo.h6" Class="fw-bold">@_jeepneyCount</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Jeepneys</MudText>
-                    </MudStack>
-                    <MudAvatar Color="Color.Secondary" Size="Size.Large" Variant="Variant.Filled">
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.TotalJeepneys</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Jeepneys</MudText>
+                    </div>
+                    <MudAvatar Color="Color.Secondary" Variant="Variant.Filled">
                         <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />
                     </MudAvatar>
                 </MudStack>
                 <MudDivider Class="my-2" />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("jeepneys"))">View Jeepneys</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("jeepneys"))">View All</MudButton>
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="1" Class="pa-3">
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-primary);">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudStack>
-                        <MudText Typo="Typo.h6" Class="fw-bold">@_driverCount</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Drivers</MudText>
-                    </MudStack>
-                    <MudAvatar Color="Color.Primary" Size="Size.Large" Variant="Variant.Filled">
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.TotalDrivers</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Drivers</MudText>
+                    </div>
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
                         <MudIcon Icon="@Icons.Material.Filled.Person" />
                     </MudAvatar>
                 </MudStack>
                 <MudDivider Class="my-2" />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("drivers"))">View Drivers</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("drivers"))">View All</MudButton>
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="1" Class="pa-3">
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-info);">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudStack>
-                        <MudText Typo="Typo.h6" Class="fw-bold">@_locationCount</MudText>
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.TotalLocations</MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">Locations</MudText>
-                    </MudStack>
-                    <MudAvatar Color="Color.Info" Size="Size.Large" Variant="Variant.Filled">
+                    </div>
+                    <MudAvatar Color="Color.Info" Variant="Variant.Filled">
                         <MudIcon Icon="@Icons.Material.Filled.Place" />
                     </MudAvatar>
                 </MudStack>
                 <MudDivider Class="my-2" />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("locations"))">View Locations</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("locations"))">View All</MudButton>
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="1" Class="pa-3">
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-warning);">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                    <MudStack>
-                        <MudText Typo="Typo.h6" Class="fw-bold">@_routeCount</MudText>
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.TotalRoutes</MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">Routes</MudText>
-                    </MudStack>
-                    <MudAvatar Color="Color.Warning" Size="Size.Large" Variant="Variant.Filled">
+                    </div>
+                    <MudAvatar Color="Color.Warning" Variant="Variant.Filled">
                         <MudIcon Icon="@Icons.Material.Filled.Route" />
                     </MudAvatar>
                 </MudStack>
                 <MudDivider Class="my-2" />
-                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("routes"))">View Routes</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("routes"))">View All</MudButton>
             </MudCard>
         </MudItem>
+
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-success);">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.ActiveTrips</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Active Trips</MudText>
+                    </div>
+                    <MudAvatar Color="Color.Success" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.DirectionsRun" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@_summary.WaitingTrips waiting</MudText>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4" lg="2">
+            <MudCard Elevation="1" Class="pa-4" Style="border-left: 4px solid var(--mud-palette-dark);">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.h5" Class="fw-bold">@_summary.CompletedTripsToday</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Done Today</MudText>
+                    </div>
+                    <MudAvatar Color="Color.Dark" Variant="Variant.Filled">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" />
+                    </MudAvatar>
+                </MudStack>
+                <MudDivider Class="my-2" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Avg load: @_summary.AveragePassengerLoadPercent%
+                </MudText>
+            </MudCard>
+        </MudItem>
+
     </MudGrid>
 
-    <!-- Main content -->
-    <MudGrid Spacing="3">
+    <!-- ── Row 2: Bar Chart + Donut Chart ─────────────────────────────────── -->
+    <MudGrid Spacing="3" Class="mb-6">
+
+        <!-- Trips by Route — Bar Chart -->
         <MudItem xs="12" md="7">
-            <MudPaper Class="pa-4" Elevation="0" Style="min-height:260px;">
-                <MudText Typo="Typo.h6" Class="mb-2 fw-bold">Recent Activity</MudText>
-                @if (!_recentActivity.Any())
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold">Trips by Route</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">All-time trip count per route</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary" />
+                </MudStack>
+
+                @if (_routeLabels.Length == 0)
                 {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No recent activity.</MudText>
+                    <MudAlert Severity="Severity.Info" Dense="true">No trip data available yet.</MudAlert>
+                }
+                else
+                {
+                    <MudChart ChartType="ChartType.Bar"
+                              ChartSeries="@_tripsByRouteSeries"
+                              XAxisLabels="@_routeLabels"
+                              ChartOptions="@_barOptions"
+                              Width="100%"
+                              Height="280px" />
                 }
             </MudPaper>
         </MudItem>
 
+        <!-- Trip Status Breakdown — Donut Chart -->
         <MudItem xs="12" md="5">
-            <MudPaper Class="pa-4" Elevation="0" Style="min-height:260px;">
-                <MudText Typo="Typo.h6" Class="mb-2 fw-bold">Quick Actions</MudText>
-                <MudStack Spacing="2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@(() => NavigateTo("jeepneys?add=true"))">
-                        Add Jeepney
-                    </MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="@(() => NavigateTo("drivers?add=true"))">
-                        Add Driver
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Place" OnClick="@(() => NavigateTo("locations"))">
-                        Manage Locations
-                    </MudButton>
-                    <MudDivider />
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Use these shortcuts to quickly navigate to common pages.</MudText>
+            <MudPaper Class="pa-4" Elevation="1" Style="height: 100%;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold">Trip Status</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Current breakdown</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.DonutSmall" Color="Color.Secondary" />
                 </MudStack>
+
+                @if (_tripStatusData.Sum() == 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">No active trips at the moment.</MudAlert>
+                }
+                else
+                {
+                    <MudStack AlignItems="AlignItems.Center">
+                        <MudChart ChartType="ChartType.Donut"
+                                  InputData="@_tripStatusData"
+                                  InputLabels="@_tripStatusLabels"
+                                  ChartOptions="@_donutOptions"
+                                  Width="220px"
+                                  Height="220px" />
+
+                        <!-- Legend -->
+                        <MudStack Row="true" Spacing="3" Justify="Justify.Center" Wrap="Wrap.Wrap">
+                            <MudChip T="string" Icon="@Icons.Material.Filled.Circle" IconColor="Color.Warning" Size="Size.Small" Variant="Variant.Text">
+                                Waiting: @_summary.WaitingTrips
+                            </MudChip>
+                            <MudChip T="string" Icon="@Icons.Material.Filled.Circle" IconColor="Color.Success" Size="Size.Small" Variant="Variant.Text">
+                                Active: @_summary.ActiveTrips
+                            </MudChip>
+                            <MudChip T="string" Icon="@Icons.Material.Filled.Circle" IconColor="Color.Primary" Size="Size.Small" Variant="Variant.Text">
+                                Done Today: @_summary.CompletedTripsToday
+                            </MudChip>
+                        </MudStack>
+                    </MudStack>
+                }
+
+                <!-- Avg Passenger Load Bar -->
+                <MudDivider Class="my-3" />
+                <MudText Typo="Typo.body2" Class="mb-1">
+                    <b>Avg Passenger Load</b> — @_summary.AveragePassengerLoadPercent%
+                </MudText>
+                <MudProgressLinear Value="@_summary.AveragePassengerLoadPercent"
+                                   Max="100"
+                                   Color="@GetLoadColor(_summary.AveragePassengerLoadPercent)"
+                                   Rounded="true"
+                                   Size="Size.Medium" />
+                <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">
+                    Based on departure logs across completed trips.
+                </MudText>
             </MudPaper>
         </MudItem>
+
     </MudGrid>
+
+    <!-- ── Row 3: Recent Trips + Quick Actions ─────────────────────────────── -->
+    <MudGrid Spacing="3">
+
+        <!-- Recent Trips Table -->
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <div>
+                        <MudText Typo="Typo.h6" Class="fw-bold">Recent Trips</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Latest 5 dispatched trips</MudText>
+                    </div>
+                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => NavigateTo("trips"))">
+                        View All
+                    </MudButton>
+                </MudStack>
+
+                @if (!_summary.RecentTrips.Any())
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">No trips recorded yet.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="@_summary.RecentTrips" Hover="true" Dense="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Driver</MudTh>
+                            <MudTh>Plate</MudTh>
+                            <MudTh>Route</MudTh>
+                            <MudTh>Departure</MudTh>
+                            <MudTh>Status</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Driver">@context.DriverName</MudTd>
+                            <MudTd DataLabel="Plate">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.JeepneyPlate</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Route">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">@context.RouteCode</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Departure">
+                                @(context.DepartureTime.HasValue
+                                    ? context.DepartureTime.Value.ToLocalTime().ToString("hh:mm tt")
+                                    : "—")
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@GetStatusColor(context.Status)"
+                                         Variant="Variant.Filled">
+                                    @context.Status
+                                </MudChip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <!-- Quick Actions + Fleet Health -->
+        <MudItem xs="12" md="5">
+            <MudStack Spacing="3">
+
+                <!-- Quick Actions -->
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3 fw-bold">Quick Actions</MudText>
+                    <MudStack Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   OnClick="@(() => NavigateTo("jeepneys?add=true"))">
+                            Add Jeepney
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                                   OnClick="@(() => NavigateTo("drivers?add=true"))">
+                            Add Driver
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.AltRoute"
+                                   OnClick="@(() => NavigateTo("routes"))">
+                            Manage Routes
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Place"
+                                   OnClick="@(() => NavigateTo("locations"))">
+                            Manage Locations
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+
+                <!-- Fleet Health snapshot -->
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3 fw-bold">Fleet Snapshot</MudText>
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.body2">Jeepneys on road</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_summary.ActiveTrips / @_summary.TotalJeepneys</MudText>
+                        </MudStack>
+                        <MudProgressLinear Value="@_jeepneyUtilization"
+                                           Max="100"
+                                           Color="Color.Secondary"
+                                           Rounded="true"
+                                           Size="Size.Small" />
+
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1">
+                            <MudText Typo="Typo.body2">Driver utilization</MudText>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@_summary.ActiveTrips / @_summary.TotalDrivers</MudText>
+                        </MudStack>
+                        <MudProgressLinear Value="@_driverUtilization"
+                                           Max="100"
+                                           Color="Color.Primary"
+                                           Rounded="true"
+                                           Size="Size.Small" />
+                    </MudStack>
+                </MudPaper>
+
+            </MudStack>
+        </MudItem>
+
+    </MudGrid>
+
 </MudContainer>
 
 @code {
+    private bool _loading = true;
     private DashboardSummaryDto _summary = new();
-    private int _jeepneyCount;
-    private int _driverCount;
-    private int _locationCount;
-    private int _routeCount;
 
-    private List<string> _recentActivity = new();
+    // Bar chart
+    private List<ChartSeries> _tripsByRouteSeries = new();
+    private string[] _routeLabels = Array.Empty<string>();
+    private ChartOptions _barOptions = new()
+    {
+        YAxisTicks = 5,
+        YAxisLines = true,
+        ChartPalette = new[] { "#7E6FD8", "#5BC0EB", "#FDE74C", "#9BC53D", "#E55934" }
+    };
+
+    // Donut chart
+    private double[] _tripStatusData = Array.Empty<double>();
+    private string[] _tripStatusLabels = Array.Empty<string>();
+    private ChartOptions _donutOptions = new()
+    {
+        ChartPalette = new[] { "#FDE74C", "#9BC53D", "#7E6FD8" } // Waiting, Active, Done
+    };
+
+    // Utilization percentages (capped at 100)
+    private double _jeepneyUtilization => _summary.TotalJeepneys == 0 ? 0
+        : Math.Min(100, _summary.ActiveTrips * 100.0 / _summary.TotalJeepneys);
+
+    private double _driverUtilization => _summary.TotalDrivers == 0 ? 0
+        : Math.Min(100, _summary.ActiveTrips * 100.0 / _summary.TotalDrivers);
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("OnInitializedAsync started");
         await LoadDashboard();
-        // Temporary demo data — replace with your service calls
-        await Task.Delay(300);
-
-        _jeepneyCount = _summary.TotalJeepneys;
-        _driverCount = _summary.TotalDrivers;
-        _locationCount = _summary.TotalLocations;
-        _routeCount = _summary.TotalRoutes;
-
-        _recentActivity = new List<string>
-        {
-            "Jeepney ABX 1234 was assigned to Juan Dela Cruz.",
-            "Driver Maria Santos updated contact number.",
-            "Route 02B schedule updated.",
-            "New location added: Carbon Terminal."
-        };
+        _loading = false;
     }
+
     private async Task LoadDashboard()
     {
         try
         {
-            _summary = await Http.GetFromJsonAsync<DashboardSummaryDto>("api/v1/dashboard/summary");
-            Console.WriteLine($"API Response: TotalJeepneys = {_summary.TotalJeepneys}");
+            _summary = await Http.GetFromJsonAsync<DashboardSummaryDto>("/api/v1/dashboard/summary")
+                       ?? new DashboardSummaryDto();
+
+            // Build bar chart data
+            _routeLabels = _summary.TripsByRoute.Select(r => r.RouteCode).ToArray();
+            _tripsByRouteSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Trips",
+                    Data = _summary.TripsByRoute.Select(r => (double)r.TripCount).ToArray()
+                }
+            };
+
+            // Build donut chart data
+            _tripStatusData = new double[] { _summary.WaitingTrips, _summary.ActiveTrips, _summary.CompletedTripsToday };
+            _tripStatusLabels = new string[] { "Waiting", "Active", "Done Today" };
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+            Snackbar.Add($"Failed to load dashboard: {ex.Message}", Severity.Error);
         }
     }
+
     private void NavigateTo(string path)
     {
-        // Simple navigation helper — adjust routes to match your app
-        if (path.StartsWith("/"))
-            Navigation.NavigateTo(path);
-        else
-            Navigation.NavigateTo("/" + path.TrimStart('/'));
+        Navigation.NavigateTo(path.StartsWith("/") ? path : "/" + path.TrimStart('/'));
     }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "OnGoing" => Color.Success,
+        "Waiting" => Color.Warning,
+        "Completed" => Color.Primary,
+        _ => Color.Default
+    };
+
+    private Color GetLoadColor(double pct) => pct switch
+    {
+        >= 90 => Color.Error,
+        >= 70 => Color.Warning,
+        _ => Color.Success
+    };
 }
