@@ -121,7 +121,7 @@ public class DriverService : IDriverService
     public async Task<DriverDetail> GetDetail(int driverId)
     {
         var driver = await _uow.Drivers.GetByIdAsync(driverId);
-        if (driver == null) throw new InvalidIdException("Invalid driver ID!");
+        if (driver == null || driver.IsDeleted) throw new InvalidIdException("Invalid driver ID!");
 
         var jeepneyData = await _uow.Jeepneys.Get(FetchOptions.IncludeDeleted)
             .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))

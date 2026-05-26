@@ -55,7 +55,8 @@ public class LocationService : ILocationService
     public async Task<LocationDetail> GetByIdAsync(int locationId)
     {
         var location = await _uow.Locations.GetByIdAsync(locationId);
-        if (location == null) return null;
+
+        if (location == null || location.IsDeleted) throw new InvalidIdException("That location is deleted.");
 
         var routesQuery = _uow.Routes.Get();
         var locationsQuery = _uow.Locations.Get();

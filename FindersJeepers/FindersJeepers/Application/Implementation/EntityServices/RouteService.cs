@@ -45,6 +45,8 @@ public class RouteService : IRouteService
     {
         var route = await _uow.Routes.GetByIdAsync(routeId);
 
+        if (route == null || route.IsDeleted) throw new InvalidIdException("Invalid id or that route is deleted");
+
         var locationStart = await _uow.Locations.GetByIdAsync(route.LocationStartId);
         var locationEnd = await _uow.Locations.GetByIdAsync(route.LocationEndId);
 

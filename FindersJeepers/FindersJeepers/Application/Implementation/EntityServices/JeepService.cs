@@ -47,7 +47,7 @@ public class JeepService : IJeepService
     public async Task<JeepneyDetail> GetDetail(int jeepId)
     {
         var jeep = await _uow.Jeepneys.GetByIdAsync(jeepId);
-        if (jeep == null) throw new InvalidIdException("Invalid jeepney ID!");
+        if (jeep == null || jeep.IsDeleted) throw new InvalidIdException("Invalid jeepney ID!");
 
         var route = await _uow.Routes.GetByIdAsync(jeep.RouteId);
 

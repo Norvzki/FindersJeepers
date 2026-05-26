@@ -71,7 +71,8 @@ public class TripService : ITripService
     public async Task NextStop(NextStopRequest req)
     {
         var trip = await _uow.Trips.GetByIdAsync(req.TripId);
-        if (trip == null) throw new InvalidIdException("Trip not found!");
+        if (trip == null || trip.IsDeleted) throw new InvalidIdException("Trip not found or that trip is deleted!");
+
         if (trip.Status != TripStatus.OnGoing) throw new DomainException("Trip is not ongoing!");
 
         var route = await _uow.Routes.GetByIdAsync(trip.RouteId);
@@ -173,6 +174,11 @@ public class TripService : ITripService
 
     public async Task<TripDetailDto> GetDetailAsync(int tripId)
     {
+        var trip = await _uow.Trips.GetByIdAsync(tripId);
+
+        if (trip == null || trip.IsDeleted) throw new InvalidIdException("That trip is already deleted!");
+
+
         return await (
             from t in _uow.Trips.Get(FetchOptions.IncludeDeleted)
             where t.Id == tripId
