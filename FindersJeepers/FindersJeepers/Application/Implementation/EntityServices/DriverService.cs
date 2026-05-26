@@ -124,12 +124,15 @@ public class DriverService : IDriverService
         if (driver == null || driver.IsDeleted) throw new InvalidIdException("Invalid driver ID!");
 
         var jeepneyData = await _uow.Jeepneys.Get(FetchOptions.IncludeDeleted)
-            .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))
-            .Join(_uow.Routes.Get(),
-                j => j.RouteId,
-                r => r.Id,
-                (j, r) => new { Jeepney = j, Route = r })
-            .ToListAsync();
+        .Where(j => j.Drivers.Any(d => d.DriverId == driverId && d.UnassignedAt == null))
+        .GroupJoin(_uow.Routes.Get(),
+            j => j.RouteId,
+            r => r.Id,
+            (j, routes) => new { Jeepney = j, Routes = routes })
+        .SelectMany(
+            x => x.Routes.DefaultIfEmpty(),
+            (x, r) => new { Jeepney = x.Jeepney, Route = r })
+        .ToListAsync();
 
         var assignedJeepneys = new List<JeepneySummary>();
 
@@ -153,14 +156,16 @@ public class DriverService : IDriverService
                 PlateNumber = x.Jeepney.PlateNumber,
                 BodyNumber = x.Jeepney.BodyNumber,
                 Capacity = x.Jeepney.Capacity,
-                RouteCode = x.Route.RouteCode,
-                IsAvailable = currentTrip == null, // wtf?
+                RouteCode = x.Route?.RouteCode ?? "No Route",
+                IsAvailable = currentTrip == null && x.Jeepney.RouteId != null,
                 CurrentDriverName = driverName
             });
-        }   
+        }
 
         var jeepneyIds = jeepneyData.Select(x => x.Jeepney.Id).ToList();
-        var routesByJeepneyId = jeepneyData.ToDictionary(x => x.Jeepney.Id, x => x.Route.RouteCode);
+        var routesByJeepneyId = jeepneyData.ToDictionary(
+        x => x.Jeepney.Id,
+        x => x.Route?.RouteCode ?? "No Route");
 
         var trips = await _uow.Trips.Get()
             .Where(t=>t.DriverId == driverId)

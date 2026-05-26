@@ -41,7 +41,8 @@ public class OptionService : IOptionService
     {
 
         return await (from j in _uow.Jeepneys.Get()
-                      join r in _uow.Routes.Get() on j.RouteId equals r.Id
+                      join r in _uow.Routes.Get() on j.RouteId equals r.Id into routes // left join
+                      from r in routes.DefaultIfEmpty()
                       where !j.Drivers.Any(x => x.DriverId == driverId && x.UnassignedAt == null)
                       select new JeepneyOption
                       {
@@ -50,9 +51,9 @@ public class OptionService : IOptionService
                           Capacity = j.Capacity,
                           NumberOfDrivers = j.Drivers.Count(x => x.UnassignedAt == null),
                           PlateNumber = j.PlateNumber,
-                          RouteCode = r.RouteCode
+                          RouteCode = r != null ? r.RouteCode : "No Route"
                       }
-                      ).ToListAsync();
+              ).ToListAsync();
 
         //return await _uow.Jeepneys.Get()
         //    .Join(_uow.Routes.Get(), j => j.RouteId, r => r.Id)
@@ -69,6 +70,7 @@ public class OptionService : IOptionService
         //    }).ToListAsync();
     }
     
+    // obsolete
     public async Task<List<LocationDto>> SearchLocations(string query)
     {
 
@@ -86,6 +88,7 @@ public class OptionService : IOptionService
 
     }
 
+    // obsolete
     public async Task<List<LocationDto>> GetLocations()
     {
             return await _uow.Locations.Get()

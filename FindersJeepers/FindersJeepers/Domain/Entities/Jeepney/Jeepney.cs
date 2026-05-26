@@ -4,7 +4,7 @@ public class Jeepney : AggregateRoot
     public string PlateNumber { get; private set; } // alternate key
     public string BodyNumber { get; private set; } // alternate key
     public int Capacity { get; private set; }
-    public int RouteId { get; private set; }
+    public int? RouteId { get; private set; }
     private readonly List<JeepneyDriver> _drivers = new();
     public IReadOnlyCollection<JeepneyDriver> Drivers => _drivers;
 
@@ -21,7 +21,7 @@ public class Jeepney : AggregateRoot
          
     }
 
-    public static Jeepney Create(string plateNumber, string bodyNumber, int capacity, int routeId)
+    public static Jeepney Create(string plateNumber, string bodyNumber, int capacity, int? routeId)
     {
         if (string.IsNullOrEmpty(plateNumber)) throw new DomainException("Plate number cannot be empty.");
         if (string.IsNullOrEmpty(bodyNumber)) throw new DomainException("Body number cannot be empty.");
@@ -39,7 +39,7 @@ public class Jeepney : AggregateRoot
 
     }
 
-    public void UpdateInformation(string plateNumber, string bodyNumber, int capacity, int routeId)
+    public void UpdateInformation(string plateNumber, string bodyNumber, int capacity, int? routeId)
     {
         if (string.IsNullOrEmpty(plateNumber)) throw new DomainException("Plate number cannot be empty.");
         if (string.IsNullOrEmpty(bodyNumber)) throw new DomainException("Body number cannot be empty.");

@@ -1,4 +1,5 @@
-﻿public class DriverDto
+﻿
+public class DriverDto
 {
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;

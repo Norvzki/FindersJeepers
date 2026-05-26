@@ -51,14 +51,6 @@ else
                                 <MudText Typo="Typo.subtitle1">@jeepney.PlateNumber</MudText>
                                 <MudText Typo="Typo.caption" Class="mud-text-secondary">Body #@jeepney.BodyNumber</MudText>
                             </CardHeaderContent>
-                            <CardHeaderActions>
-                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" @onclick:stopPropagation="true">
-                                    <MudMenuItem OnClick="() => OpenEditDialog(jeepney)">Edit</MudMenuItem>
-                                    <MudMenuItem OnClick="() => ConfirmDelete(jeepney)">
-                                        <MudText Color="Color.Error">Delete</MudText>
-                                    </MudMenuItem>
-                                </MudMenu>
-                            </CardHeaderActions>
                         </MudCardHeader>
     
                         <MudDivider Light="true" />
@@ -68,7 +60,7 @@ else
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                     <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
                                     <MudText Typo="Typo.body2" Class="mud-text-secondary">Route:</MudText>
-                                    <MudText Typo="Typo.body2">@jeepney.RouteCode</MudText>
+                                    <MudText Typo="Typo.body2">@(jeepney.RouteCode == string.Empty ? "None" : jeepney.RouteCode)</MudText>
                                 </MudStack>
 
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -113,10 +105,11 @@ else
                 <MudNumericField @bind-Value="_form.Capacity" Label="Capacity" Variant="Variant.Outlined" Min="1" Required="true" />
             </MudItem>
             <MudItem xs="6">
-                <MudSelect @bind-Value="_form.RouteId" Label="Assign Route" Variant="Variant.Outlined" Required="true">
+                <MudSelect T="int?" @bind-Value="_form.RouteId" Label="Assign Route"
+                           Variant="Variant.Outlined" Clearable="true" Placeholder="None">
                     @foreach (var route in _availableRoutes)
                     {
-                        <MudSelectItem Value="@route.Id">@route.RouteCode</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)route.Id)">@route.RouteCode</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -160,7 +153,6 @@ else
     {
         await Task.Delay(500);
         await LoadData();
-
     }
 
     private async Task LoadData()
@@ -172,20 +164,9 @@ else
     private void OpenAddDialog()
     {
         _form = new JeepneyForm();
+        _form.RouteId = null;
+        _form.Capacity = 20;
         _isEditing = false;
-        _dialogVisible = true;
-    }
-
-    private void OpenEditDialog(JeepneyDto jeepney)
-    {
-        _form = new JeepneyForm
-        {
-            Id = jeepney.Id,
-            PlateNumber = jeepney.PlateNumber,
-            BodyNumber = jeepney.BodyNumber,
-            Capacity = jeepney.Capacity,
-        };
-        _isEditing = true;
         _dialogVisible = true;
     }
 

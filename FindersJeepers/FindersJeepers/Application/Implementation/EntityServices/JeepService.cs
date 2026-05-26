@@ -29,18 +29,19 @@ public class JeepService : IJeepService
     public async Task<List<JeepneyDto>> GetAsync(int pageNumber = 1, int pageSize = 10)
     {
         return await (
-            from j in _uow.Jeepneys.Get()
-            join r in _uow.Routes.Get() on j.RouteId equals r.Id
-            select new JeepneyDto
-            {
-                Id = j.Id,
-                PlateNumber = j.PlateNumber,
-                BodyNumber = j.BodyNumber,
-                Capacity = j.Capacity,
-                RouteCode = r.RouteCode,
-                DriverCount = j.Drivers.Count(j0 => j0.UnassignedAt == null),
-                TripCount = _uow.Trips.Get(null).Count(t => t.JeepneyId == j.Id)
-            }
+        from j in _uow.Jeepneys.Get()
+        join r in _uow.Routes.Get() on j.RouteId equals r.Id into routeGroup
+        from subRoute in routeGroup.DefaultIfEmpty()
+        select new JeepneyDto
+        {
+            Id = j.Id,
+            PlateNumber = j.PlateNumber,
+            BodyNumber = j.BodyNumber,
+            Capacity = j.Capacity,
+            RouteCode = subRoute != null ? subRoute.RouteCode : string.Empty,
+            DriverCount = j.Drivers.Count(j0 => j0.UnassignedAt == null),
+            TripCount = _uow.Trips.Get(null).Count(t => t.JeepneyId == j.Id)
+        }
         )
         .ToListAsync();
     }
@@ -49,7 +50,10 @@ public class JeepService : IJeepService
         var jeep = await _uow.Jeepneys.GetByIdAsync(jeepId);
         if (jeep == null || jeep.IsDeleted) throw new InvalidIdException("Invalid jeepney ID!");
 
-        var route = await _uow.Routes.GetByIdAsync(jeep.RouteId);
+        string routecode = string.Empty;
+
+        if (jeep.RouteId != null)
+            routecode = (await _uow.Routes.GetByIdAsync((int)jeep.RouteId)).RouteCode;
 
         var drivers = await GetJeepneyDriversAsync(jeepId);
 
@@ -64,7 +68,7 @@ public class JeepService : IJeepService
                 ArrivalTime = t.ArrivalTime,
                 DepartureTime = t.DepartureTime,
                 LogCount = t.Logs.Count,
-                RouteCode = r.RouteCode, // Fixed the missing assignment from your original snippet
+                RouteCode = r.RouteCode,
                 JeepneyPlateNumber = jeep.PlateNumber,
                 Driver = new DriverSummary
                 {
@@ -103,7 +107,7 @@ public class JeepService : IJeepService
             PlateNumber = jeep.PlateNumber,
             BodyNumber = jeep.BodyNumber,
             Capacity = jeep.Capacity,
-            RouteCode = route.RouteCode,
+            RouteCode = routecode,
             CurrentStatus = currentTrip != null ? "OnGoing" : "Waiting",
             CurrentTrip = currentTrip,
             AssignedDrivers = drivers,

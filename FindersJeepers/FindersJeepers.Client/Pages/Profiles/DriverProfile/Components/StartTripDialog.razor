@@ -21,12 +21,12 @@
             <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Select a Jeepney</MudText>
             <MudStack Spacing="2" Class="mb-4">
                 @foreach (var jeep in Jeeps)
-                {
+                {   
                     bool sel = SelectedJeepId == jeep.Id;
                     <MudPaper Outlined="true"
-                              Style="@($"border-radius:8px; cursor:pointer; border-color:{(sel ? "var(--mud-palette-success)" : "var(--mud-palette-lines-default)")}")"
+                              Style="@($"border-radius:8px; cursor:{(jeep.IsAvailable ? "pointer" : "not-allowed")}; opacity:{(jeep.IsAvailable ? "1" : "0.5")}; border-color:{(sel ? "var(--mud-palette-success)" : "var(--mud-palette-lines-default)")}")"
                               Class="@($"pa-3 {(sel ? "mud-success-hover" : "")}")"
-                              @onclick="() => SelectedJeepIdChanged.InvokeAsync(jeep.Id)">
+                              @onclick="() => { if (jeep.IsAvailable) SelectedJeepIdChanged.InvokeAsync(jeep.Id); }">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
                             <MudAvatar Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Medium">
                                 <MudIcon Icon="@Icons.Material.Filled.DirectionsBus" />

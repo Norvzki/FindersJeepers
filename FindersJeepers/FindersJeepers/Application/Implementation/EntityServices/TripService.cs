@@ -60,7 +60,11 @@ public class TripService : ITripService
         }
 
         var jeepEntity = await _uow.Jeepneys.GetByIdAsync(finalJeepId);
-        var trip = Trip.Create(req.DriverId, jeepEntity.Id, jeepEntity.RouteId, req.Direction.Value);
+
+        if (jeepEntity.RouteId == null)
+            throw new ApplicationException("You cannot start a trip if a jeepney doesn't have a route!");
+
+        var trip = Trip.Create(req.DriverId, jeepEntity.Id, (int)jeepEntity.RouteId, req.Direction.Value);
 
         await _uow.Trips.AddAsync(trip);
         await _uow.SaveChangesAsync();

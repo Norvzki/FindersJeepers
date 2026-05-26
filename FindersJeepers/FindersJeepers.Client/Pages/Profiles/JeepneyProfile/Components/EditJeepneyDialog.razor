@@ -15,10 +15,11 @@
                 <MudNumericField @bind-Value="_form.Capacity" Label="Capacity" Variant="Variant.Outlined" Min="1" Required="true" />
             </MudItem>
             <MudItem xs="6">
-                <MudSelect @bind-Value="_form.RouteId" Label="Assign Route" Variant="Variant.Outlined" Required="true">
+                <MudSelect T="int?" @bind-Value="_form.RouteId" Label="Assign Route"
+                           Variant="Variant.Outlined" Clearable="true" Placeholder="None">
                     @foreach (var route in _availableRoutes)
                     {
-                        <MudSelectItem Value="@route.Id">@route.RouteCode</MudSelectItem>
+                        <MudSelectItem T="int?" Value="@((int?)route.Id)">@route.RouteCode</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>

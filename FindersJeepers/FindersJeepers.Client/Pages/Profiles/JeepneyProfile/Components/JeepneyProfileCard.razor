@@ -48,7 +48,7 @@
             </MudStack>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Class="mud-text-secondary" />
-                <MudText Typo="Typo.body2">Route: @Jeepney.RouteCode</MudText>
+                <MudText Typo="Typo.body2">Route: @(Jeepney.RouteCode == string.Empty ? "None" : Jeepney.RouteCode)</MudText>
             </MudStack>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudIcon Icon="@Icons.Material.Filled.History" Size="Size.Small" Class="mud-text-secondary" />
