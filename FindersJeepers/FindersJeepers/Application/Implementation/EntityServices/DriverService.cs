@@ -7,11 +7,9 @@ using static MudBlazor.Colors;
 public class DriverService : IDriverService
 {
     private readonly IUnitOfWork _uow;
-    private readonly IJeepService _jeepService;
-    public DriverService(IUnitOfWork uow, IJeepService jeepService)
+    public DriverService(IUnitOfWork uow)
     {
         _uow = uow;
-        _jeepService = jeepService;
     }
 
     public async Task CreateAsync(CreateDriverRequest req)
@@ -163,24 +161,26 @@ public class DriverService : IDriverService
         }
 
         var jeepneyIds = jeepneyData.Select(x => x.Jeepney.Id).ToList();
-        var routesByJeepneyId = jeepneyData.ToDictionary(
-        x => x.Jeepney.Id,
-        x => x.Route?.RouteCode ?? "No Route");
 
-        var trips = await _uow.Trips.Get()
-            .Where(t=>t.DriverId == driverId)
-            .Join(_uow.Jeepneys.Get(FetchOptions.IncludeDeleted), t=>t.JeepneyId, j=>j.Id, (t, j) => new {Trip = t, Jeepney = j})
-            .Select(t => new TripSummary
+        var trips = await (
+            from t in _uow.Trips.Get()
+            where t.DriverId == driverId
+            join j in _uow.Jeepneys.Get(FetchOptions.IncludeDeleted)
+                on t.JeepneyId equals j.Id
+            join r in _uow.Routes.Get()
+                on t.RouteId equals r.Id into routeGroup
+            from subRoute in routeGroup.DefaultIfEmpty()
+            select new TripSummary
             {
-                Id = t.Trip.Id,
-                ArrivalTime = t.Trip.ArrivalTime,
-                DepartureTime = t.Trip.DepartureTime,
-                LogCount = t.Trip.Logs.Count,
-                RouteCode = routesByJeepneyId.GetValueOrDefault(t.Jeepney.Id, string.Empty),
-                Status = t.Trip.Status.ToString(),
-                JeepneyPlateNumber = t.Jeepney.PlateNumber
-            })
-            .ToListAsync();
+                Id = t.Id,
+                ArrivalTime = t.ArrivalTime,
+                DepartureTime = t.DepartureTime,
+                LogCount = t.Logs.Count,
+                RouteCode = subRoute != null ? subRoute.RouteCode : string.Empty,
+                Status = t.Status.ToString(),
+                JeepneyPlateNumber = j.PlateNumber
+            }
+        ).ToListAsync();
 
         return new DriverDetail
         {
