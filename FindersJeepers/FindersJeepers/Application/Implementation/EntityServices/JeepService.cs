@@ -11,7 +11,18 @@ public class JeepService : IJeepService
 
     public async Task CreateAsync(CreateJeepneyRequest request)
     {
-            var jeep = Jeepney.Create(request.PlateNumber, request.BodyNumber, request.Capacity, request.RouteId);
+        var plateNumberJeepney = await _uow.Jeepneys.Get()
+    .Where(x => x.PlateNumber == request.PlateNumber)
+    .FirstOrDefaultAsync();
+        if (plateNumberJeepney != null)
+            throw new ApplicationException("That plate number is already taken!");
+        var bodyNumberJeepney = await _uow.Jeepneys.Get()
+            .Where(x => x.BodyNumber == request.BodyNumber)
+            .FirstOrDefaultAsync();
+        if (bodyNumberJeepney != null)
+            throw new ApplicationException("This body number is already taken!");
+
+        var jeep = Jeepney.Create(request.PlateNumber, request.BodyNumber, request.Capacity, request.RouteId);
             await _uow.Jeepneys.AddAsync(jeep);
             await _uow.SaveChangesAsync();
     }
@@ -102,6 +113,17 @@ public class JeepService : IJeepService
     public async Task UpdateAsync(UpdateJeepneyRequest request)
     {
         var jeepney = await _uow.Jeepneys.GetByIdAsync(request.Id);
+
+        var plateNumberJeepney = await _uow.Jeepneys.Get()
+            .Where(x => x.PlateNumber == request.PlateNumber && x.Id != jeepney.Id)
+            .FirstOrDefaultAsync();
+        if (plateNumberJeepney != null)
+            throw new ApplicationException("That plate number is already taken!");
+        var bodyNumberJeepney = await _uow.Jeepneys.Get()
+            .Where(x => x.BodyNumber == request.BodyNumber && x.Id != jeepney.Id)
+            .FirstOrDefaultAsync();
+        if (bodyNumberJeepney != null)
+            throw new ApplicationException("This body number is already taken!");
 
         var currentTrip = await _uow.Trips.GetCurrentTripByJeepneyAsync(request.Id);
         if (currentTrip != null)

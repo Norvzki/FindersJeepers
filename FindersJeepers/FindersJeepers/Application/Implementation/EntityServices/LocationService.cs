@@ -15,6 +15,12 @@ public class LocationService : ILocationService
 
     public async Task CreateAsync(CreateLocationRequest request)
     {
+        var locationExists = await _uow.Locations.Get()
+            .Where(x => x.Name == request.Name)
+            .AnyAsync();
+        if (locationExists)
+            throw new ApplicationException("A location already exists by this name!");
+
         await _uow.Locations.AddAsync(Location.Create(request.Name, request.Description));
         await _uow.SaveChangesAsync();
     }
@@ -25,7 +31,9 @@ public class LocationService : ILocationService
 
         var routesWithLocation = await _uow.Routes.GetByLocationAsync(locationId);
 
-        if (routesWithLocation != null)
+        routesWithLocation = routesWithLocation.Where(x => !x.IsDeleted).ToList();
+
+        if (routesWithLocation.Any())
             throw new ApplicationException("You cannot delete a location that is used by routes!");
 
         location.Delete();
@@ -89,6 +97,12 @@ public class LocationService : ILocationService
     public async Task UpdateAsync(UpdateLocationRequest request)
     {
         var location = await _uow.Locations.GetByIdAsync(request.Id);
+
+        var locationExists = await _uow.Locations.Get()
+            .Where(x => x.Name == request.Name && x.Id != request.Id)
+            .AnyAsync();
+
+        if (locationExists) throw new ApplicationException("There's already a location with this name!");
 
         location.UpdateInformation(request.Name, request.Description);
         _uow.Locations.Update(location);
