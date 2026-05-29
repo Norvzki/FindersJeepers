@@ -45,20 +45,26 @@ public class Trip : AggregateRoot
     {
         if (Status == TripStatus.OnGoing) throw new DomainException("Trip has already started and is ongoing!");
         if (Status == TripStatus.Completed) throw new DomainException("You cannot start an already completed trip!");
-        if (Status == TripStatus.Unavailable) throw new NotImplementedException("Not implemented yet.");
+        if (Status == TripStatus.Aborted) throw new NotImplementedException("You cannot start a completed trip!");
 
         DepartureTime = DateTime.UtcNow;
         Status = TripStatus.OnGoing;
     }
 
-    public void CompleteTrip()
+    public void CompleteTrip(bool isAborted = false)
     {
         if (Status != TripStatus.OnGoing)
             throw new DomainException("Trip must be ongoing to complete.");
+        
+            Status = TripStatus.Completed;
 
-        Status = TripStatus.Completed;
+        if (isAborted)
+            Status = TripStatus.Aborted;
+
         ArrivalTime = DateTime.UtcNow;
     }
+
+    public TripLog? GetLatestLog() => Logs.FirstOrDefault();
 
     public void LogStopEvent(int locationId, int passengerCount, int capacity, TripLogType logType)
     {

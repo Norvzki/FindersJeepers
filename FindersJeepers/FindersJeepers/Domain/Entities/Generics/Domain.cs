@@ -21,5 +21,5 @@ public enum TripStatus
     Waiting = 0,
     Completed = 1,
     OnGoing = 2,
-    Unavailable = 3,
+    Aborted = 3,
 }

@@ -218,7 +218,7 @@ public class TripService : ITripService
         var trip = await _uow.Trips.GetByIdAsync(tripId);
 
         if (trip == null)
-            throw new KeyNotFoundException("Trip not found!");
+            throw new ApplicationException("Trip not found!");
 
         trip.StartTrip();
         _uow.Trips.Update(trip);
@@ -227,11 +227,26 @@ public class TripService : ITripService
     public async Task CompleteTrip(int tripId)
     {
         var trip = await _uow.Trips.GetByIdAsync(tripId);
+        var route = await _uow.Routes.GetByIdAsync(trip.RouteId);
+        var locationEnd = await _uow.Locations.GetByIdAsync(route.LocationEndId);
 
         if (trip == null)
-            throw new KeyNotFoundException("Trip not found!");
+            throw new ApplicationException("Trip not found!");
+        if (route == null)
+            throw new ApplicationException("Route not found!");
+        if (locationEnd == null)
+            throw new ApplicationException("Location not found!");
 
-        trip.CompleteTrip();
+        bool isAborted = false;
+        var log = trip.GetLatestLog();
+
+        if (log == null)
+            isAborted = true;
+        else
+            isAborted = log.LocationId == locationEnd.Id ? false : true;
+
+
+        trip.CompleteTrip(isAborted);
         _uow.Trips.Update(trip);
         await _uow.SaveChangesAsync();
     }

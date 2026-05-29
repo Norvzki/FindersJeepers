@@ -5,7 +5,6 @@
 
 <MudContainer MaxWidth="MaxWidth.False" Class="pa-6">
 
-
 <MudText Typo="Typo.h4" Class="mb-1 fw-bold">Trips & Logs</MudText>
 <MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">Monitor active and completed jeepney trips.</MudText>
 
@@ -23,6 +22,9 @@
             <MudSelectItem Value="@("Waiting")">Waiting</MudSelectItem>
             <MudSelectItem Value="@("OnGoing")">Ongoing</MudSelectItem>
             <MudSelectItem Value="@("Completed")">Completed</MudSelectItem>
+            <MudSelectItem Value="@("Aborted")">Aborted</MudSelectItem>
+                <MudSelectItem Value="@("Forward")">Forward</MudSelectItem>
+                <MudSelectItem Value="@("Return")">Return</MudSelectItem>
         </MudSelect>
     </MudStack>
     @* <MudButton Variant="Variant.Filled"
@@ -63,20 +65,6 @@ else
                             </MudStack>
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">Route: @trip.RouteCode</MudText>
                         </CardHeaderContent>
-                        <CardHeaderActions>
-                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small">
-                                @if (trip.Status == "Waiting")
-                                {
-                                    <MudMenuItem OnClick="() => StartTrip(trip)">Start Trip</MudMenuItem>
-                                }
-                                @if (trip.Status == "OnGoing")
-                                {
-                                    <MudMenuItem OnClick="() => OpenLogDialog(trip)">Log Stop Event</MudMenuItem>
-                                    <MudMenuItem OnClick="() => CompleteTrip(trip)">Complete Trip</MudMenuItem>
-                                }
-                                <MudMenuItem OnClick="() => OpenLogsPanel(trip)">View Logs</MudMenuItem>
-                            </MudMenu>
-                        </CardHeaderActions>
                     </MudCardHeader>
                     <MudDivider />
                     <MudCardContent Class="pt-3">
@@ -113,59 +101,6 @@ else
 
 </MudContainer>
 
-@* Create Trip Dialog *@
-<MudDialog Visible="_dialogVisible" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Create Trip</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid>
-            <MudItem xs="12">
-                <MudSelect @bind-Value="_form.JeepneyId" Label="Jeepney" Variant="Variant.Outlined" Required="true">
-                    @foreach (var j in _availableJeepneys)
-                    {
-                        <MudSelectItem Value="@j.Id">@j.PlateNumber (@j.RouteCode)</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _dialogVisible = false">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTrip">Create</MudButton>
-    </DialogActions>
-</MudDialog>
-@* Log Stop Event Dialog *@
-<MudDialog Visible="_logDialogVisible" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Log Stop Event — @_selectedTrip?.PlateNumber</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudGrid>
-            <MudItem xs="12">
-                <MudSelect @bind-Value="_logForm.StopId" Label="Stop" Variant="Variant.Outlined" Required="true">
-                    @foreach (var stop in _availableStops)
-                    {
-                        <MudSelectItem Value="@stop.Id">@stop.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12">
-                <MudNumericField @bind-Value="_logForm.PassengerCount" Label="Passenger Count" Variant="Variant.Outlined" Min="0" Required="true" />
-            </MudItem>
-            <MudItem xs="12">
-                <MudSelect @bind-Value="_logForm.EventType" Label="Event Type" Variant="Variant.Outlined" Required="true">
-                    <MudSelectItem Value="@("Arrival")">Arrival</MudSelectItem>
-                    <MudSelectItem Value="@("Departure")">Departure</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _logDialogVisible = false">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveLog">Log Event</MudButton>
-    </DialogActions>
-</MudDialog>
 @* View Logs Dialog *@
 <MudDialog Visible="_logsPanelVisible" Options="_logsDialogOptions">
     <TitleContent>
@@ -206,13 +141,10 @@ else
     private bool _dialogVisible = false;
     private bool _logDialogVisible = false;
     private bool _logsPanelVisible = false;
-    private TripForm _form = new();
-    private LogForm _logForm = new();
     private TripDto? _selectedTrip;
     private List<TripDto>? _trips;
     private List<TripLogDto> _selectedTripLogs = new();
     private List<JeepneyOption> _availableJeepneys = new();
-    private List<StopOption> _availableStops = new();
 
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
     private DialogOptions _logsDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
@@ -222,27 +154,12 @@ else
             (string.IsNullOrWhiteSpace(_search) ||
              t.PlateNumber.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
              t.RouteCode.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
-            (_statusFilter is null || t.Status == _statusFilter))
+            (_statusFilter is null || t.Status == _statusFilter || t.RouteCode.Contains(_statusFilter)))
         ?? Enumerable.Empty<TripDto>();
 
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(500);
-
-        _availableJeepneys = new List<JeepneyOption>
-        {
-            new() { Id = 1, PlateNumber = "ABX 1234", RouteCode = "01A" },
-            new() { Id = 2, PlateNumber = "CDY 5678", RouteCode = "02B" },
-        };
-
-        _availableStops = new List<StopOption>
-        {
-            new() { Id = 1, Name = "Ayala Center Cebu" },
-            new() { Id = 2, Name = "IT Park" },
-            new() { Id = 3, Name = "Colon Street" },
-            new() { Id = 4, Name = "Carbon Market" },
-        };
-
         _trips = await Http.GetFromJsonAsync<List<TripDto>>("/api/v1/trips");
     }
 
@@ -251,6 +168,7 @@ else
         "OnGoing" => Color.Success,
         "Waiting" => Color.Warning,
         "Completed" => Color.Default,
+        "Aborted"   => Color.Error,
         _ => Color.Default
     };
 
@@ -259,76 +177,13 @@ else
         "OnGoing" => Icons.Material.Filled.DirectionsBus,
         "Waiting" => Icons.Material.Filled.HourglassTop,
         "Completed" => Icons.Material.Filled.CheckCircle,
+        "Aborted"   => Icons.Material.Filled.Error,
         _ => Icons.Material.Filled.Circle
     };
-
-    private void OpenAddDialog()
-    {
-        _form = new TripForm();
-        _dialogVisible = true;
-    }
-
-    private void OpenLogDialog(TripDto trip)
-    {
-        _selectedTrip = trip;
-        _logForm = new LogForm();
-        _logDialogVisible = true;
-    }
-
-    private void OpenLogsPanel(TripDto trip)
-    {
-        _selectedTrip = trip;
-        // Replace with: _selectedTripLogs = await TripService.GetLogsAsync(trip.Id);
-        _selectedTripLogs = new List<TripLogDto>
-        {
-            new() { StopName = "Ayala Center Cebu", EventType = "Departure", PassengerCount = 12, Timestamp = DateTime.Now.AddHours(-1) },
-            new() { StopName = "IT Park", EventType = "Arrival", PassengerCount = 8, Timestamp = DateTime.Now.AddMinutes(-40) },
-            new() { StopName = "IT Park", EventType = "Departure", PassengerCount = 14, Timestamp = DateTime.Now.AddMinutes(-35) },
-        };
-        _logsPanelVisible = true;
-    }
-
-    private async Task StartTrip(TripDto trip)
-    {
-        // Replace with: await TripService.StartTripAsync(trip.Id);
-        trip.Status = "OnGoing";
-        trip.DepartureTime = DateTime.Now;
-    }
-
-    private async Task CompleteTrip(TripDto trip)
-    {
-        // Replace with: await TripService.CompleteTripAsync(trip.Id);
-        trip.Status = "Completed";
-        trip.ArrivalTime = DateTime.Now;
-    }
-
-    private async Task SaveTrip()
-    {
-        // Replace with: await TripService.CreateAsync(_form);
-        _dialogVisible = false;
-    }
-
-    private async Task SaveLog()
-    {
-        // Replace with: await TripService.LogStopEventAsync(_selectedTrip.Id, _logForm);
-        _logDialogVisible = false;
-    }
 
     private void NavigateToTrip(int id)
     {
         _nav.NavigateTo($"/trips/{id}");
     }
 
-
-    public class TripForm { public int JeepneyId { get; set; } }
-
-    public class LogForm
-    {
-        public int StopId { get; set; }
-        public int PassengerCount { get; set; }
-        public string EventType { get; set; } = string.Empty;
-    }
-
-    public class JeepneyOption { public int Id { get; set; } public string PlateNumber { get; set; } = string.Empty; public string RouteCode { get; set; } = string.Empty; }
-    public class StopOption { public int Id { get; set; } public string Name { get; set; } = string.Empty; }
 }
