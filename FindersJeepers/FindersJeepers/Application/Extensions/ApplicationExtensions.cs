@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddScoped<IOptionService, OptionService>();
         services.AddScoped<ISimulationService, SimulationService>();
         services.AddScoped<IGenerationService, GenerationService>();
+        services.AddScoped<IJeepFinderService, JeepFinderService>();
         services.AddScoped<IDashboardService, DashboardService>(); // Crazy stuff -norbel
 
         return services;

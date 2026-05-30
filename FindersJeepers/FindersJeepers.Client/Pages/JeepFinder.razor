@@ -1,0 +1,209 @@
+﻿@page "/findjeep"
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+@using System.Net.Http.Json
+
+<PageTitle>Find a Jeep — FindersJeepers</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-8">
+
+    <MudText Typo="Typo.overline" Class="d-block text-center mb-1" Color="Color.Secondary">
+        FindersJeepers
+    </MudText>
+    <MudText Typo="Typo.h3" Align="Align.Center" Class="fw-black mb-1">
+        Find Your <MudText Typo="Typo.h3" Color="Color.Primary" Inline="true">Jeep</MudText>
+    </MudText>
+    <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="mb-8">
+        Pick your stop. We'll tell you what's coming.
+    </MudText>
+
+    <MudCard Elevation="4" Class="mb-6 pa-4">
+        @if (_locations == null)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="56px" Class="rounded" />
+        }
+        else
+        {
+            <MudSelect T="int"
+                       Label="Where are you?"
+                       Variant="Variant.Outlined"
+                       Value="_selectedLocationId"
+                       ValueChanged="OnLocationChanged"
+                       FullWidth="true"
+                       AnchorOrigin="Origin.BottomCenter">
+                @foreach (var loc in _locations)
+                {
+                    <MudSelectItem T="int" Value="@loc.Id">@loc.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </MudCard>
+
+    @if (_loading)
+    {
+        <MudStack Spacing="3">
+            @for (int i = 0; i < 3; i++)
+            {
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudSkeleton Width="60px" Height="16px" Class="mb-2" />
+                    <MudSkeleton Width="45%" Height="28px" Class="mb-2" />
+                    <MudSkeleton Width="75%" Height="14px" Class="mb-1" />
+                    <MudSkeleton Width="40%" Height="14px" />
+                </MudCard>
+            }
+        </MudStack>
+    }
+    else if (_results != null && _selectedLocationId > 0)
+    {
+        @if (!_results.Any())
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="py-12" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.h6">No jeeps heading your way</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Try a different stop, or check back in a moment.
+                </MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Baseline" Spacing="1" Class="mb-3">
+                <MudText Typo="Typo.subtitle2">
+                    @_results.Count jeep@(_results.Count != 1 ? "s" : "") found
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    near @_selectedLocationName
+                </MudText>
+            </MudStack>
+
+            <MudStack Spacing="3">
+                @foreach (var result in _results)
+                {
+                    var color = GetStopColor(result.StopsAwayCount);
+                    <MudCard Elevation="3"
+                             Class="jeep-card cursor-pointer"
+                             Style="@GetBorderStyle(result.StopsAwayCount)"
+                             @onclick="() => GoToJeep(result.Jeepney.Id)">
+                        <MudCardContent Class="pa-4">
+
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                <MudStack Row="true" AlignItems="AlignItems.Baseline" Spacing="1">
+                                    <MudText Typo="Typo.h4" Color="@color" Class="fw-black lh-1">
+                                        @result.StopsAwayCount
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        stop@(result.StopsAwayCount != 1 ? "s" : "") away
+                                    </MudText>
+                                </MudStack>
+                                <MudChip T="string"
+                                         Text="@result.Jeepney.RouteCode"
+                                         Color="Color.Primary"
+                                         Variant="Variant.Outlined"
+                                         Size="Size.Small" />
+                            </MudStack>
+
+                            <MudStack Row="true" AlignItems="AlignItems.Baseline" Spacing="2" Class="mb-3">
+                                <MudText Typo="Typo.h6" Class="fw-bold">
+                                    @result.Jeepney.PlateNumber
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Body #@result.Jeepney.BodyNumber
+                                </MudText>
+                            </MudStack>
+
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row="true" Spacing="3">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIcon Icon="@Icons.Material.Outlined.AirlineSeatReclineNormal"
+                                                 Size="Size.Small" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @result.Jeepney.Capacity seats
+                                        </MudText>
+                                    </MudStack>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIcon Icon="@Icons.Material.Outlined.Person"
+                                                 Size="Size.Small" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @result.Jeepney.DriverCount driver@(result.Jeepney.DriverCount != 1 ? "s" : "")
+                                        </MudText>
+                                    </MudStack>
+                                </MudStack>
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Secondary" />
+                            </MudStack>
+
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudStack>
+        }
+    }
+
+</MudContainer>
+
+<style>
+    .jeep-card {
+        transition: transform .18s, box-shadow .18s;
+        border-left-width: 4px;
+        border-left-style: solid;
+    }
+    .jeep-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--mud-elevation-8) !important;
+    }
+    .fw-black { font-weight: 900 !important; }
+    .fw-bold  { font-weight: 700 !important; }
+    .lh-1     { line-height: 1 !important; }
+    .cursor-pointer { cursor: pointer; }
+</style>
+
+@code {
+
+    private List<LocationDto>?  _locations;
+    private List<FoundJeepDto>? _results;
+    private int    _selectedLocationId;
+    private string _selectedLocationName = string.Empty;
+    private bool   _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _locations = await Http.GetFromJsonAsync<List<LocationDto>>("api/v1/locations");
+    }
+
+    private async Task OnLocationChanged(int locationId)
+    {
+        _selectedLocationId = locationId;
+        if (_selectedLocationId <= 0) return;
+
+        _selectedLocationName = _locations?
+            .FirstOrDefault(l => l.Id == _selectedLocationId)?.Name ?? string.Empty;
+
+        _loading = true;
+        _results = null;
+        StateHasChanged();
+
+        _results = await Http.GetFromJsonAsync<List<FoundJeepDto>>($"api/v1/jeepfinder/{_selectedLocationId}");
+        _loading = false;
+    }
+
+    private void GoToJeep(int jeepneyId) =>
+        Nav.NavigateTo($"/jeepneys/{jeepneyId}");
+
+    private static Color GetStopColor(int stops) => stops switch
+    {
+        <= 2 => Color.Success,
+        <= 5 => Color.Warning,
+        _    => Color.Error
+    };
+
+    private static string GetBorderStyle(int stops)
+    {
+        var hex = stops switch
+        {
+            <= 2 => "var(--mud-palette-success)",
+            <= 5 => "var(--mud-palette-warning)",
+            _    => "var(--mud-palette-error)"
+        };
+        return $"border-left-color: {hex};";
+    }
+}
